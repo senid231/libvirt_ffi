@@ -1,14 +1,14 @@
 require_relative 'lib/libvirt/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'libvirt'
+  spec.name          = 'libvirt_ffi'
   spec.version       = Libvirt::VERSION
   spec.authors       = ['Denis Talakevich']
   spec.email         = ['senid231@gmail.com']
 
   spec.summary       = 'Libvirt FFI'
   spec.description   = 'Libvirt FFI'
-  spec.homepage      = 'https://github.com/senid231/libvirt'
+  spec.homepage      = 'https://github.com/senid231/libvirt_ffi'
   spec.license       = 'MIT'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
   spec.metadata['homepage_uri'] = spec.homepage
@@ -23,4 +23,6 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+
+  spec.add_dependency 'ffi', '>= 1.0'
 end
