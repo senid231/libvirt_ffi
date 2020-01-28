@@ -1,17 +1,27 @@
 module LibvirtAsync
+  class << self
+    def logger=(logger)
+      @logger = logger
+    end
+
+    def logger
+      @logger
+    end
+  end
+
   module WithDbg
     extend ActiveSupport::Concern
 
     class_methods do
       def dbg(progname = nil, &block)
-        Libvirt.logger.debug(progname || "#{name}.:0x#{object_id.to_s(16)}", &block)
+        LibvirtAsync.logger&.debug(progname || "#{name}.:0x#{object_id.to_s(16)}", &block)
       end
     end
 
     private
 
     def dbg(progname = nil, &block)
-      Libvirt.logger.debug(progname || "#{self.class}#:0x#{object_id.to_s(16)}", &block)
+      LibvirtAsync.logger&.debug(progname || "#{self.class}#:0x#{object_id.to_s(16)}", &block)
     end
   end
 

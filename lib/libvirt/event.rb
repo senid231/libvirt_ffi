@@ -9,24 +9,32 @@ module Libvirt
     extend Forwardable
     extend SingleForwardable
 
-    single_delegate [:register, :unregister, :registered?] => :instance
+    single_delegate [
+                        :register,
+                        :unregister,
+                        :registered?,
+                        :debug,
+                        :debug=,
+                        :invoke_handle_callback,
+                        :invoke_timeout_callback
+                    ] => :instance
+
+    attr_accessor :debug
 
     Opaque = Struct.new(:cb, :opaque, :ff)
 
-    class << self
-      def invoke_handle_callback(watch, fd, events, opaque)
-        cb = opaque.cb
-        op = opaque.opaque
-        Util.log(:debug) { "Libvirt::Event INVOKE_HANDLE_CALLBACK watch=#{watch} fd=#{fd} events=#{events} op=#{op}" }
-        cb.call(watch, fd, events, op)
-      end
+    def invoke_handle_callback(watch, fd, events, opaque)
+      cb = opaque.cb
+      op = opaque.opaque
+      dbg { "Libvirt::Event INVOKE_HANDLE_CALLBACK watch=#{watch} fd=#{fd} events=#{events} op=#{op}" }
+      cb.call(watch, fd, events, op)
+    end
 
-      def invoke_timeout_callback(timer, opaque)
-        cb = opaque.cb
-        op = opaque.opaque
-        Util.log(:debug) { "Libvirt::Event INVOKE_TIMEOUT_CALLBACK timer=#{timer} op=#{op}" }
-        cb.call(timer, op)
-      end
+    def invoke_timeout_callback(timer, opaque)
+      cb = opaque.cb
+      op = opaque.opaque
+      dbg { "Libvirt::Event INVOKE_TIMEOUT_CALLBACK timer=#{timer} op=#{op}" }
+      cb.call(timer, op)
     end
 
     def registered?
@@ -80,18 +88,18 @@ module Libvirt
     private
 
     def _add_handle(fd, event, cb, opaque, ff)
-      Util.log(:debug) { "Libvirt::Event ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
+      dbg { "Libvirt::Event ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
       op = Opaque.new(cb, opaque, ff)
       @add_handle.call(fd, event, op)
     end
 
     def _update_handle(watch, event)
-      Util.log(:debug) { "Libvirt::Event UPDATE_HANDLE watch=#{watch}, event=#{event}" }
+      dbg { "Libvirt::Event UPDATE_HANDLE watch=#{watch}, event=#{event}" }
       @update_handle.call(watch, event)
     end
 
     def _remove_handle(watch)
-      Util.log(:debug) { "Libvirt::Event REMOVE_HANDLE watch=#{watch}" }
+      dbg { "Libvirt::Event REMOVE_HANDLE watch=#{watch}" }
       op = @remove_handle.call(watch)
       free_func = op.ff
       opaque = op.opaque
@@ -100,23 +108,29 @@ module Libvirt
     end
 
     def _add_timer(timeout, cb, opaque, ff)
-      Util.log(:debug) { "Libvirt::Event ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
+      dbg { "Libvirt::Event ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
       op = Opaque.new(cb, opaque, ff)
       @add_timer.call(timeout, op)
     end
 
     def _update_timer(timer, timeout)
-      Util.log(:debug) { "Libvirt::Event UPDATE_TIMER timer=#{timer}, timeout=#{timeout}" }
+      dbg { "Libvirt::Event UPDATE_TIMER timer=#{timer}, timeout=#{timeout}" }
       @update_timer.call(timer, timeout)
     end
 
     def _remove_timer(timer)
-      Util.log(:debug) { "Libvirt::Event REMOVE_TIMER timer=#{timer}" }
+      dbg { "Libvirt::Event REMOVE_TIMER timer=#{timer}" }
       op = @remove_timer.call(timer)
       free_func = op.ff
       opaque = op.opaque
       free_func.call(opaque) unless free_func.null?
       0
+    end
+
+    def dbg(&block)
+      return unless debug
+
+      Util.log(:debug, &block)
     end
 
   end

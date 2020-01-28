@@ -2,12 +2,13 @@
 
 module Libvirt
   class Domain
-    def initialize(dom_ptr, conn)
+    def initialize(dom_ptr)
       @dom_ptr = dom_ptr
-      @conn = conn
-      ObjectSpace.define_finalizer(self, proc { |obj_id|
-        STDOUT.puts("finalized Libvirt::Domain #{obj_id.to_s(16)}")
-      })
+
+      free = ->(obj_id) do
+        STDOUT.puts("finalized Libvirt::Domain obj_id=0x#{obj_id.to_s(16)}, @dom_ptr=#{@dom_ptr},")
+      end
+      ObjectSpace.define_finalizer(self, free)
     end
 
     def get_state
@@ -55,6 +56,13 @@ module Libvirt
 
     def xml_desc(flags = 0)
       FFI::Domain.virDomainGetXMLDesc(@dom_ptr, flags)
+    end
+
+    def screenshot(stream, display = 0)
+      mime_type, pointer = FFI::Domain.virDomainScreenshot(@dom_ptr, stream.to_ptr, display, 0)
+      raise Error, "Couldn't attach domain screenshot" if pointer.null?
+      # free pointer required
+      mime_type
     end
   end
 end

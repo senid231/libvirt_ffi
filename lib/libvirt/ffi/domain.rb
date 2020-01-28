@@ -109,6 +109,14 @@ module Libvirt
       # )
       attach_function :virDomainGetXMLDesc, [:pointer, :uint], :string # strptr?
 
+      # char *virDomainScreenshot (
+      #   virDomainPtr domain,
+      # 	virStreamPtr stream,
+      # 	unsigned int screen,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainScreenshot, [:pointer, :pointer, :uint, :uint], :strptr
+
       # typedef int	(*virConnectDomainEventCallback) (
       #   virConnectPtr conn,
       # 	virDomainPtr dom,

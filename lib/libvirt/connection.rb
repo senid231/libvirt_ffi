@@ -6,9 +6,11 @@ module Libvirt
       @uri = uri
       @conn_ptr = ::FFI::Pointer.new(0)
       @cb_data = {}
-      ObjectSpace.define_finalizer(self, proc { |obj_id|
-        STDOUT.puts("finalized Libvirt::Connection #{obj_id.to_s(16)}")
-      })
+
+      free = ->(obj_id) do
+        STDOUT.puts("finalized Libvirt::Connection obj_id=0x#{obj_id.to_s(16)}, @conn_ptr=#{@conn_ptr}, @uri=#{@uri}, @cb_data=#{@cb_data}")
+      end
+      ObjectSpace.define_finalizer(self, free)
     end
 
     def open
@@ -61,7 +63,7 @@ module Libvirt
       result = FFI::Domain.virConnectListAllDomains(@conn_ptr, domains_ptr, flags)
       raise Error, "Couldn't retrieve domains list with flags #{flags.to_s(16)}" if result < 0
       ptr = domains_ptr.read_pointer
-      ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr, self) }
+      ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr) }
     end
 
     # @yield conn, dom
@@ -129,6 +131,12 @@ module Libvirt
       result = FFI::NodeInfo.virNodeGetInfo(@conn_ptr, node_info_ptr)
       raise Error, "Couldn't get connection node info" if result < 0
       NodeInfo.new(node_info_ptr)
+    end
+
+    def stream(flags = 0)
+      pointer = FFI::Stream.virStreamNew(@conn_ptr, flags)
+      raise Error, "Couldn't create stream" if pointer.null?
+      Stream.new(pointer)
     end
 
     private
