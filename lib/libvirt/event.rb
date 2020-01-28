@@ -2,7 +2,6 @@
 
 require 'singleton'
 require 'forwardable'
-require 'libvirt/ffi/event'
 
 module Libvirt
   class Event

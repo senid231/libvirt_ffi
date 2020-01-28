@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'objspace'
-require 'libvirt/ffi/domain'
-require 'libvirt/util'
-
 module Libvirt
   class Domain
     def initialize(dom_ptr, conn)

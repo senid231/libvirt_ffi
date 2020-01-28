@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
 require 'ffi'
+require 'objspace'
 require 'libvirt/util'
 require 'libvirt/error'
 require 'libvirt/ffi/common'
+require 'libvirt/ffi/libvirt'
 require 'libvirt/ffi/connection'
 require 'libvirt/ffi/domain'
-require 'libvirt/lib_version'
+require 'libvirt/ffi/event'
 require 'libvirt/event'
 require 'libvirt/connection'
 require 'libvirt/domain'

@@ -20,6 +20,9 @@ DOMS = []
 Async do
   ASYNC_REACTOR = Async::Task.current.reactor
 
+  puts "Lib version #{Libvirt.lib_version}"
+  puts "Gem version #{Libvirt::VERSION}"
+
   IMPL.start
 
   c = Libvirt::Connection.new('qemu+tcp://localhost:16510/system')

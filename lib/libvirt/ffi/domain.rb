@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-require 'ffi'
-require 'libvirt/util'
-require 'libvirt/ffi/common'
-
 module Libvirt
   module FFI
     module Domain

@@ -1,10 +1,5 @@
 # frozen_string_literal: true
 
-require 'objspace'
-require 'libvirt/ffi/connection'
-require 'libvirt/ffi/domain'
-require 'libvirt/util'
-
 module Libvirt
   class Connection
     def initialize(uri)
