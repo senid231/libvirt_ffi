@@ -93,6 +93,44 @@ module Libvirt
       true
     end
 
+    def version
+      version_ptr = ::FFI::MemoryPointer.new(:ulong)
+      result = FFI::Connection.virConnectGetVersion(@conn_ptr, version_ptr)
+      raise Error, "Couldn't get connection version" if result < 0
+      version_number = version_ptr.get_ulong(0)
+      # version_number = FFI::Connection.virConnectGetVersion(@conn_ptr)
+      Libvirt::Util.parse_version(version_number)
+    end
+
+    def lib_version
+      version_ptr = ::FFI::MemoryPointer.new(:ulong)
+      result = FFI::Connection.virConnectGetLibVersion(@conn_ptr, version_ptr)
+      raise Error, "Couldn't get connection lib version" if result < 0
+      version_number = version_ptr.get_ulong(0)
+      # version_number = FFI::Connection.virConnectGetLibVersion(@conn_ptr)
+      Libvirt::Util.parse_version(version_number)
+    end
+
+    def hostname
+      FFI::Connection.virConnectGetHostname(@conn_ptr)
+    end
+
+    # @param type [String,NilClass]
+    def max_vcpus(type = nil)
+      FFI::Connection.virConnectGetMaxVcpus(@conn_ptr, type)
+    end
+
+    def capabilities
+      FFI::Connection.virConnectGetCapabilities(@conn_ptr)
+    end
+
+    def node_info
+      node_info_ptr = ::FFI::MemoryPointer.new(FFI::NodeInfo::Struct.by_value)
+      result = FFI::NodeInfo.virNodeGetInfo(@conn_ptr, node_info_ptr)
+      raise Error, "Couldn't get connection node info" if result < 0
+      NodeInfo.new(node_info_ptr)
+    end
+
     private
 
     def check_open!

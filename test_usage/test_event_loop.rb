@@ -31,6 +31,22 @@ Async do
   Libvirt.logger.info {  "set_keep_alive #{res}" }
   CONNS.push(c)
 
+  puts "Connection version #{c.version.inspect}"
+  puts "Connection lib_version #{c.lib_version.inspect}"
+  puts "Connection hostname #{c.hostname.inspect}"
+  puts "Connection max_vcpus #{c.max_vcpus.inspect}"
+  puts "Connection capabilities #{c.capabilities.inspect}"
+  node_info = c.node_info
+  puts "Connection nodeInfo #{node_info}"
+  puts "NodeInfo model #{node_info.model.inspect}"
+  puts "NodeInfo cpus #{node_info.cpus.inspect}"
+  puts "NodeInfo mhz #{node_info.mhz.inspect}"
+  puts "NodeInfo nodes #{node_info.nodes.inspect}"
+  puts "NodeInfo sockets #{node_info.sockets.inspect}"
+  puts "NodeInfo cores #{node_info.cores.inspect}"
+  puts "NodeInfo threads #{node_info.threads.inspect}"
+  puts "NodeInfo memory #{node_info.memory.inspect}"
+
   c.register_domain_event_callback(Libvirt::DOMAIN_EVENT_ID_LIFECYCLE, nil) do |dom, event, detail, opaque|
     Libvirt.logger.info { "DOMAIN_EVENT_ID_LIFECYCLE user dom=#{dom}, event=#{event}, detail=#{detail}, opaque=#{opaque}" }
   end
@@ -47,17 +63,22 @@ Async do
     end
   end
 
-  res = domains.first.get_state
-  Libvirt.logger.info { "Domain #{domains.first} state #{res}" }
+  d = domains.first
+  puts "Domain uuid #{d.uuid.inspect}"
+  puts "Domain name #{d.name.inspect}"
+  puts "Domain get_state #{d.get_state.inspect}"
+  puts "Domain get_cpus #{d.max_vcpus.inspect}"
+  puts "Domain max_memory #{d.max_memory.inspect}"
+  puts "Domain xml_desc #{d.xml_desc.inspect}"
 
   # ASYNC_REACTOR.every(10) do
   #   LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) { IMPL.print_debug_info }.run
   # end
 
-  ASYNC_REACTOR.every(5) do
-    Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
-    Libvirt.logger.info { "GC.start" }
-    GC.start
-    Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
-  end
+  # ASYNC_REACTOR.every(5) do
+  #   Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
+  #   Libvirt.logger.info { "GC.start" }
+  #   GC.start
+  #   Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
+  # end
 end

@@ -9,9 +9,11 @@ require 'libvirt/ffi/libvirt'
 require 'libvirt/ffi/connection'
 require 'libvirt/ffi/domain'
 require 'libvirt/ffi/event'
+require 'libvirt/ffi/node_info'
 require 'libvirt/event'
 require 'libvirt/connection'
 require 'libvirt/domain'
+require 'libvirt/node_info'
 require 'libvirt/version'
 
 module Libvirt

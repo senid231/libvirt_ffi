@@ -6,6 +6,8 @@ module Libvirt
       extend ::FFI::Library
       ffi_lib Util.library_path
 
+      UUID_STRING_BUFLEN = 0x80 # RFC4122
+
       # int	virConnectDomainEventRegisterAny(
       #   virConnectPtr conn,
       # 	virDomainPtr dom,
@@ -70,6 +72,42 @@ module Libvirt
       # 	unsigned int flags
       # )
       attach_function :virDomainGetState, [:pointer, :pointer, :pointer, :uint], :int
+
+      # const char *virDomainGetName (
+      #   virDomainPtr domain
+      # )
+      attach_function :virDomainGetName, [:pointer], :string # strptr?
+
+      # int	virDomainGetMaxVcpus (
+      #   virDomainPtr domain
+      # )
+      attach_function :virDomainGetMaxVcpus, [:pointer], :int
+
+      # int	virDomainGetVcpus	(
+      #   virDomainPtr domain,
+      # 	virVcpuInfoPtr info,
+      # 	int maxinfo,
+      # 	unsigned char * cpumaps,
+      # 	int maplen
+      # )
+      attach_function :virDomainGetVcpus, [:pointer, :pointer, :int, :pointer, :int], :int
+
+      # int	virDomainGetUUIDString (
+      #   virDomainPtr domain,
+      # 	char * buf
+      # )
+      attach_function :virDomainGetUUIDString, [:pointer, :pointer], :int
+
+      # unsigned long	virDomainGetMaxMemory	(
+      #   virDomainPtr domain
+      # )
+      attach_function :virDomainGetMaxMemory, [:pointer], :ulong
+
+      # char *virDomainGetXMLDesc	(
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainGetXMLDesc, [:pointer, :uint], :string # strptr?
 
       # typedef int	(*virConnectDomainEventCallback) (
       #   virConnectPtr conn,
