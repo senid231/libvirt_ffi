@@ -18,7 +18,7 @@ module Libvirt
       end
 
       def library_path
-        'libvirt'
+        %w(libvirt libvirt.so.0)
       end
 
       # @param [Integer] version_number ulong
