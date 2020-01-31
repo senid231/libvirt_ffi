@@ -26,14 +26,14 @@ module Libvirt
     def invoke_handle_callback(watch, fd, events, opaque)
       cb = opaque.cb
       op = opaque.opaque
-      dbg { "Libvirt::Event INVOKE_HANDLE_CALLBACK watch=#{watch} fd=#{fd} events=#{events} op=#{op}" }
+      dbg { "INVOKE_HANDLE_CALLBACK watch=#{watch} fd=#{fd} events=#{events} op=#{op}" }
       cb.call(watch, fd, events, op)
     end
 
     def invoke_timeout_callback(timer, opaque)
       cb = opaque.cb
       op = opaque.opaque
-      dbg { "Libvirt::Event INVOKE_TIMEOUT_CALLBACK timer=#{timer} op=#{op}" }
+      dbg { "INVOKE_TIMEOUT_CALLBACK timer=#{timer} op=#{op}" }
       cb.call(timer, op)
     end
 
@@ -88,18 +88,18 @@ module Libvirt
     private
 
     def _add_handle(fd, event, cb, opaque, ff)
-      dbg { "Libvirt::Event ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
+      dbg { "ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
       op = Opaque.new(cb, opaque, ff)
       @add_handle.call(fd, event, op)
     end
 
     def _update_handle(watch, event)
-      dbg { "Libvirt::Event UPDATE_HANDLE watch=#{watch}, event=#{event}" }
+      dbg { "UPDATE_HANDLE watch=#{watch}, event=#{event}" }
       @update_handle.call(watch, event)
     end
 
     def _remove_handle(watch)
-      dbg { "Libvirt::Event REMOVE_HANDLE watch=#{watch}" }
+      dbg { "REMOVE_HANDLE watch=#{watch}" }
       op = @remove_handle.call(watch)
       free_func = op.ff
       opaque = op.opaque
@@ -108,18 +108,18 @@ module Libvirt
     end
 
     def _add_timer(timeout, cb, opaque, ff)
-      dbg { "Libvirt::Event ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
+      dbg { "ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
       op = Opaque.new(cb, opaque, ff)
       @add_timer.call(timeout, op)
     end
 
     def _update_timer(timer, timeout)
-      dbg { "Libvirt::Event UPDATE_TIMER timer=#{timer}, timeout=#{timeout}" }
+      dbg { "UPDATE_TIMER timer=#{timer}, timeout=#{timeout}" }
       @update_timer.call(timer, timeout)
     end
 
     def _remove_timer(timer)
-      dbg { "Libvirt::Event REMOVE_TIMER timer=#{timer}" }
+      dbg { "REMOVE_TIMER timer=#{timer}" }
       op = @remove_timer.call(timer)
       free_func = op.ff
       opaque = op.opaque
@@ -128,9 +128,7 @@ module Libvirt
     end
 
     def dbg(&block)
-      return unless debug
-
-      Util.log(:debug, &block)
+      Util.log(:debug, 'Libvirt::Event', &block)
     end
 
   end

@@ -68,6 +68,8 @@ module Libvirt
     end
 
     def screenshot(stream, display = 0)
+      dbg { "#screenshot stream=#{stream}, display=#{display}," }
+
       mime_type, pointer = FFI::Domain.virDomainScreenshot(@dom_ptr, stream.to_ptr, display, 0)
       raise Error, "Couldn't attach domain screenshot" if pointer.null?
       # free pointer required
@@ -78,6 +80,12 @@ module Libvirt
       result = FFI::Domain.virDomainFree(@dom_ptr)
       raise Error, "Couldn't free domain" if result < 0
       @dom_ptr = nil
+    end
+
+    private
+
+    def dbg(&block)
+      Util.log(:debug, 'Libvirt::Domain', &block)
     end
   end
 end

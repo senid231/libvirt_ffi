@@ -96,7 +96,7 @@ module Libvirt
 
     # @yield conn, dom, *args
     def register_domain_event_callback(event_id, domain = nil, opaque = nil, &block)
-      Util.logger.debug { "Libvirt::Connection#register_domain_event_callback event_id=#{event_id}" }
+      dbg { "#register_domain_event_callback event_id=#{event_id}" }
 
       enum = FFI::Domain.enum_type(:event_id)
       event_id, event_id_sym = Util.parse_enum(enum, event_id)
@@ -128,7 +128,7 @@ module Libvirt
     end
 
     def deregister_domain_event_callback(callback_id)
-      Util.logger.debug { "Libvirt::Connection#deregister_domain_event_callback callback_id=#{callback_id}" }
+      dbg { "#deregister_domain_event_callback callback_id=#{callback_id}" }
 
       result = FFI::Domain.virConnectDomainEventDeregisterAny(@conn_ptr, callback_id)
       raise Error, "Couldn't deregister domain event callback" if result < 0
@@ -178,6 +178,10 @@ module Libvirt
 
     def check_open!
       raise Error, "Connection to #{@uri.inspect} is not open" if @conn_ptr.null?
+    end
+
+    def dbg(&block)
+      Util.log(:debug, 'Libvirt::Connection', &block)
     end
   end
 end

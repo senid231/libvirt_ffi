@@ -33,6 +33,8 @@ module Libvirt
     # @param opaque [Object]
     # @yield [Stream]
     def event_add_callback(events, opaque, &block)
+      dbg { "#event_add_callback events=#{events}, opaque=#{opaque}" }
+
       raise Error, 'callback already added' unless @cb.nil?
 
       @opaque = opaque
@@ -49,12 +51,16 @@ module Libvirt
 
     # @param events [Integer] bit OR of EVENT_READABLE, EVENT_READABLE
     def event_update_callback(events)
+      dbg { "#event_update_callback events=#{events}" }
+
       result = FFI::Stream.virStreamEventUpdateCallback(@stream_ptr, events)
       raise Error, "Couldn't remove stream event callback" if result < 0
       true
     end
 
     def event_remove_callback
+      dbg { '#event_remove_callback' }
+
       result = FFI::Stream.virStreamEventRemoveCallback(@stream_ptr)
       raise Error, "Couldn't remove stream event callback" if result < 0
       opaque = @opaque
@@ -100,6 +106,12 @@ module Libvirt
       else
         raise Error, "Invalid response from virStreamRecv #{result.inspect}"
       end
+    end
+
+    private
+
+    def dbg(&block)
+      Util.log(:debug, 'Libvirt::Stream', &block)
     end
   end
 end
