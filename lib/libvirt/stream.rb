@@ -12,15 +12,15 @@ module Libvirt
       @opaque = nil
 
       free = ->(obj_id) do
-        STDOUT.puts("finalized Libvirt::Stream obj_id=0x#{obj_id.to_s(16)}, @stream_ptr=#{@stream_ptr}, @cb=#{@cb},")
-        if @stream_ptr && @cb
-          rm = FFI::Stream.virStreamEventRemoveCallback(@stream_ptr)
-          STDOUT.puts("finalized Libvirt::Stream obj_id=0x#{obj_id.to_s(16)} rm=#{rm}")
-          ab = FFI::Stream.virStreamAbort(@stream_ptr)
-          STDOUT.puts("finalized Libvirt::Stream obj_id=0x#{obj_id.to_s(16)} ab=#{ab}")
+        return unless @stream_ptr
+        if @cb
+          rcb_result = FFI::Stream.virStreamEventRemoveCallback(@stream_ptr)
+          STDERR.puts("Couldn't remove callback Libvirt::Stream (0x#{obj_id.to_s(16)}) pointer #{@stream_ptr.address}") if rcb_result < 0
+          ab_result = FFI::Stream.virStreamAbort(@stream_ptr)
+          STDERR.puts("Couldn't abort Libvirt::Stream (0x#{obj_id.to_s(16)}) pointer #{@stream_ptr.address}") if ab_result < 0
         end
-        fr = FFI::Stream.virStreamFree(@stream_ptr) if @stream_ptr
-        STDOUT.puts("finalized Libvirt::Stream obj_id=0x#{obj_id.to_s(16)} fr=#{fr}")
+        fr_result = FFI::Stream.virStreamFree(@stream_ptr)
+        STDERR.puts("Couldn't free Libvirt::Stream (0x#{obj_id.to_s(16)}) pointer #{@stream_ptr.address}") if fr_result < 0
       end
       ObjectSpace.define_finalizer(self, free)
     end
@@ -75,6 +75,14 @@ module Libvirt
       raise Error, "Couldn't remove stream event callback" if result < 0
       @cb = nil
       @opaque = nil
+    end
+
+    def free_stream
+      result = FFI::Stream.virStreamFree(@stream_ptr)
+      raise Error, "Couldn't free stream event callback" if result < 0
+      @cb = nil
+      @opaque = nil
+      @stream_ptr = nil
     end
 
     def recv(bytes)
