@@ -29,6 +29,20 @@ module Libvirt
         "#{major}.#{minor}.#{release}"
       end
 
+      # @param enum [FFI::Enum]
+      # @param value [Symbol, Integer]
+      # @return [Array] event_id, event_id_sym
+      # @raise ArgumentError
+      def parse_enum(enum, value)
+        if value.is_a?(Symbol)
+          raise ArgumentError, 'invalid enum value' unless enum.symbols.include?(value)
+          return [enum.find(value), value]
+        end
+
+        raise ArgumentError, 'invalid enum value' unless enum.symbol_map.values.include?(value)
+        [value, enum.symbol_map[value]]
+      end
+
     end
   end
 end

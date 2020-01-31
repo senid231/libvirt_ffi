@@ -2,11 +2,20 @@
 
 module Libvirt
   class Domain
+
+    def self.load_ref(dom_ptr)
+      ref_result = FFI::Domain.virDomainRef(dom_ptr)
+      raise Error, "Couldn't retrieve domain reference" if ref_result < 0
+      new(dom_ptr)
+    end
+
     def initialize(dom_ptr)
       @dom_ptr = dom_ptr
 
       free = ->(obj_id) do
-        STDOUT.puts("finalized Libvirt::Domain obj_id=0x#{obj_id.to_s(16)}, @dom_ptr=#{@dom_ptr},")
+        return unless @dom_ptr
+        fr_result = FFI::Domain.virDomainFree(@dom_ptr)
+        STDERR.puts "Couldn't free Libvirt::Domain (0x#{obj_id.to_s(16)}) pointer #{@dom_ptr.address}" if fr_result < 0
       end
       ObjectSpace.define_finalizer(self, free)
     end
@@ -63,6 +72,12 @@ module Libvirt
       raise Error, "Couldn't attach domain screenshot" if pointer.null?
       # free pointer required
       mime_type
+    end
+
+    def free_domain
+      result = FFI::Domain.virDomainFree(@dom_ptr)
+      raise Error, "Couldn't free domain" if result < 0
+      @dom_ptr = nil
     end
   end
 end

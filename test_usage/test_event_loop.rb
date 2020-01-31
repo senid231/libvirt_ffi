@@ -6,9 +6,18 @@ require 'logger'
 require 'active_support/all'
 require 'async'
 require 'get_process_mem'
+require 'gc_tracer'
 
 require_relative 'support/libvirt_async'
 require_relative 'support/log_formatter'
+
+GC::Tracer.start_logging(
+    nil,
+    gc_stat: false,
+    gc_latest_gc_info: false,
+    rusage: false,
+    events: %i[end_mark end_sweep]
+)
 
 Libvirt.logger = Logger.new(STDOUT, formatter: LogFormatter.new)
 Libvirt.logger.level = ENV['DEBUG'] ? :debug : :info
@@ -16,6 +25,7 @@ Libvirt.logger.level = ENV['DEBUG'] ? :debug : :info
 IMPL = LibvirtAsync::Implementations.new
 CONNS = []
 DOMS = []
+CB_IDS = []
 
 Async do
   ASYNC_REACTOR = Async::Task.current.reactor
@@ -47,21 +57,19 @@ Async do
   puts "NodeInfo threads #{node_info.threads.inspect}"
   puts "NodeInfo memory #{node_info.memory.inspect}"
 
-  c.register_domain_event_callback(Libvirt::DOMAIN_EVENT_ID_LIFECYCLE, nil) do |dom, event, detail, opaque|
-    Libvirt.logger.info { "DOMAIN_EVENT_ID_LIFECYCLE user dom=#{dom}, event=#{event}, detail=#{detail}, opaque=#{opaque}" }
+  cb_ids = Libvirt::Connection::DOMAIN_EVENT_IDS.map do |event_id|
+    op = OpenStruct.new(a: 'b', event_id: event_id)
+    c.register_domain_event_callback(event_id, nil, op) do |conn, dom, *args, opaque|
+      Libvirt.logger.info { "DOMAIN EVENT #{event_id} conn=#{conn}, dom=#{dom}, args=#{args}, opaque=#{opaque}" }
+    end
   end
+  CB_IDS.concat(cb_ids)
 
   puts "domains qty #{c.list_all_domains_qty}"
 
   domains = c.list_all_domains
   DOMS.concat(domains)
   puts "Domains (#{domains.size}): #{domains}"
-
-  domains.each_with_index do |domain, index|
-    c.register_domain_event_callback(Libvirt::DOMAIN_EVENT_ID_LIFECYCLE, domain) do |dom, event, detail, opaque|
-      Libvirt.logger.info { "DOMAIN_EVENT_CALLBACK LIFECYCLE user##{index} dom=#{dom}, event=#{event}, detail=#{detail}, opaque=#{opaque}" }
-    end
-  end
 
   d = domains.first
   puts "Domain uuid #{d.uuid.inspect}"
@@ -75,10 +83,27 @@ Async do
   #   LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) { IMPL.print_debug_info }.run
   # end
 
-  # ASYNC_REACTOR.every(5) do
-  #   Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
-  #   Libvirt.logger.info { "GC.start" }
-  #   GC.start
-  #   Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
-  # end
+  ASYNC_REACTOR.every(5) do
+    Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
+    # Libvirt.logger.info { "GC.start" }
+    # GC.start
+    # Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
+  end
+
+  ASYNC_REACTOR.after(20) do
+    LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
+
+      c = CONNS.first
+      CB_IDS.each do |callback_id|
+        opaque = c.deregister_domain_event_callback(callback_id)
+        puts "Retrieved opaque #{opaque}"
+      end
+      Libvirt.logger.info { 'Cleaning up!' }
+      CONNS = []
+      DOMS = []
+      CB_IDS = []
+      GC.start
+
+    end
+  end
 end

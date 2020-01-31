@@ -2,6 +2,7 @@
 
 require 'ffi'
 require 'objspace'
+require 'libvirt/domain_callback_storage'
 require 'libvirt/util'
 require 'libvirt/error'
 require 'libvirt/ffi/common'
@@ -23,8 +24,6 @@ module Libvirt
   EVENT_HANDLE_WRITABLE = 2
   EVENT_HANDLE_ERROR = 4
   EVENT_HANDLE_HANGUP = 8
-
-  DOMAIN_EVENT_ID_LIFECYCLE = 0
 
   class << self
     def lib_version

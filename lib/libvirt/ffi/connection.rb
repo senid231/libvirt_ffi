@@ -79,6 +79,16 @@ module Libvirt
       #   virConnectPtr conn
       # )
       attach_function :virConnectGetCapabilities, [:pointer],  :string # strptr ?
+
+      # int	virConnectClose	(
+      #   virConnectPtr conn
+      # )
+      attach_function :virConnectClose, [:pointer], :int
+
+      # int	virConnectRef	(
+      #   virConnectPtr conn
+      # )
+      attach_function :virConnectRef, [:pointer], :int
     end
   end
 end

@@ -2,20 +2,48 @@
 
 module Libvirt
   class Connection
+    DOMAIN_EVENT_IDS = FFI::Domain.enum_type(:event_id).symbols.dup.freeze
+
+    STORAGE = DomainCallbackStorage.new
+
+    DOMAIN_EVENT_CALLBACKS = FFI::Domain.enum_type(:event_id).symbol_map.map do |name, event_id|
+      func = FFI::Domain.event_callback(event_id) do |conn_ptr, dom_ptr, *args, op_ptr|
+        connection = Connection.load_ref(conn_ptr)
+        domain = Domain.load_ref(dom_ptr)
+        block, opaque = STORAGE.retrieve_from_pointer(op_ptr)
+        block.call(connection, domain, *args, opaque)
+      end
+      [name, func]
+    end.to_h
+
+    def self.load_ref(conn_ptr)
+      ref_result = FFI::Connection.virConnectRef(conn_ptr)
+      raise Error, "Couldn't retrieve connection reference" if ref_result < 0
+      new(nil).send(:set_connection, conn_ptr)
+    end
+
     def initialize(uri)
       @uri = uri
       @conn_ptr = ::FFI::Pointer.new(0)
-      @cb_data = {}
 
       free = ->(obj_id) do
-        STDOUT.puts("finalized Libvirt::Connection obj_id=0x#{obj_id.to_s(16)}, @conn_ptr=#{@conn_ptr}, @uri=#{@uri}, @cb_data=#{@cb_data}")
+        return if @conn_ptr.null?
+        cl_result = FFI::Connection.virConnectClose(@conn_ptr)
+        STDERR.puts "Couldn't close Libvirt::Connection (0x#{obj_id.to_s(16)}) pointer #{@conn_ptr.address}" if cl_result < 0
       end
       ObjectSpace.define_finalizer(self, free)
     end
 
     def open
       @conn_ptr = FFI::Connection.virConnectOpen(@uri)
-      raise Error, "Couldn't connect to #{@uri.inspect}" if @conn_ptr.null?
+      raise Error, "Couldn't open connection to #{@uri.inspect}" if @conn_ptr.null?
+      true
+    end
+
+    def close
+      result = FFI::Connection.virConnectClose(@conn_ptr)
+      raise Error, "Couldn't close connection to #{@uri.inspect}" if result < 0
+      @conn_ptr = ::FFI::Pointer.new(0)
       true
     end
 
@@ -66,42 +94,46 @@ module Libvirt
       ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr) }
     end
 
-    # @yield conn, dom
+    # @yield conn, dom, *args
     def register_domain_event_callback(event_id, domain = nil, opaque = nil, &block)
-      if event_id == Libvirt::DOMAIN_EVENT_ID_LIFECYCLE
-        cb = FFI::Domain::domain_event_id_lifecycle_callback(&block)
-      else
-        raise Error, "not supported event_id #{event_id.inspect}"
-      end
+      Util.logger.debug { "Libvirt::Connection#register_domain_event_callback event_id=#{event_id}" }
+
+      enum = FFI::Domain.enum_type(:event_id)
+      event_id, event_id_sym = Util.parse_enum(enum, event_id)
+      cb = DOMAIN_EVENT_CALLBACKS.fetch(event_id_sym)
+
+      cb_data, cb_data_free_func = STORAGE.allocate_struct
 
       result = FFI::Domain.virConnectDomainEventRegisterAny(
           @conn_ptr,
           domain&.to_ptr,
           event_id,
           cb,
-          opaque&.to_ptr,
-          nil # free_opaque
+          cb_data.pointer,
+          cb_data_free_func
       )
-      raise Error, "Couldn't register domain event callback" if result < 0
+      if result < 0
+        cb_data.pointer.free
+        raise Error, "Couldn't register domain event callback"
+      end
 
-      @cb_data[result] = { event_id: event_id, cb: cb, opaque: opaque }
+      STORAGE.store_struct(
+          cb_data,
+          connection_pointer: @conn_ptr,
+          callback_id: result,
+          cb: block,
+          opaque: opaque
+      )
       result
     end
 
     def deregister_domain_event_callback(callback_id)
-      @cb_data.delete(callback_id)
+      Util.logger.debug { "Libvirt::Connection#deregister_domain_event_callback callback_id=#{callback_id}" }
+
       result = FFI::Domain.virConnectDomainEventDeregisterAny(@conn_ptr, callback_id)
       raise Error, "Couldn't deregister domain event callback" if result < 0
-      true
-    end
 
-    def version
-      version_ptr = ::FFI::MemoryPointer.new(:ulong)
-      result = FFI::Connection.virConnectGetVersion(@conn_ptr, version_ptr)
-      raise Error, "Couldn't get connection version" if result < 0
-      version_number = version_ptr.get_ulong(0)
-      # version_number = FFI::Connection.virConnectGetVersion(@conn_ptr)
-      Libvirt::Util.parse_version(version_number)
+      STORAGE.remove_struct(connection_pointer: @conn_ptr, callback_id: callback_id)
     end
 
     def lib_version
@@ -109,7 +141,6 @@ module Libvirt
       result = FFI::Connection.virConnectGetLibVersion(@conn_ptr, version_ptr)
       raise Error, "Couldn't get connection lib version" if result < 0
       version_number = version_ptr.get_ulong(0)
-      # version_number = FFI::Connection.virConnectGetLibVersion(@conn_ptr)
       Libvirt::Util.parse_version(version_number)
     end
 
@@ -140,6 +171,10 @@ module Libvirt
     end
 
     private
+
+    def set_connection(conn_ptr)
+      @conn_ptr = conn_ptr
+    end
 
     def check_open!
       raise Error, "Connection to #{@uri.inspect} is not open" if @conn_ptr.null?

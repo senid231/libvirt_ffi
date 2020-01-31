@@ -10,4 +10,5 @@ group :development do
   gem 'async', '~> 1.24'
   gem 'activesupport'
   gem 'get_process_mem'
+  gem 'gc_tracer'
 end
