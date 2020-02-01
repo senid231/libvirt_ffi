@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class LogFormatter
   LOG_FORMAT = "%s, %s [%s/%s/%s] %s\n".freeze
   DEFAULT_DATETIME_FORMAT = "%F %T.%N".freeze

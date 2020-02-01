@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module LibvirtAsync
   class << self
     def logger=(logger)
