@@ -77,6 +77,19 @@ module Libvirt
           :PMSUSPENDED, 0x7 # the domain is suspended by guest power management
       ]
 
+      # enum virDomainEventType
+      enum :event_type, [
+          :DEFINED, 0x0,
+          :UNDEFINED, 0x1,
+          :STARTED, 0x2,
+          :SUSPENDED, 0x3,
+          :RESUMED, 0x4,
+          :STOPPED, 0x5,
+          :SHUTDOWN, 0x6,
+          :PMSUSPENDED, 0x7,
+          :CRASHED, 0x8
+      ]
+
       # int	virDomainFree	(
       #   virDomainPtr domain
       # )
@@ -176,7 +189,7 @@ module Libvirt
       # 	int detail,
       # 	void * opaque
       # )
-      callback :virConnectDomainEventCallback, [:pointer, :pointer, :int, :int, :pointer], :int
+      callback :virConnectDomainEventCallback, [:pointer, :pointer, :event_type, :int, :pointer], :int
 
       # typedef void (*virConnectDomainEventGenericCallback) (
       #   virConnectPtr conn,
