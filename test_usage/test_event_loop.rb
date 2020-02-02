@@ -60,9 +60,11 @@ Async do
 
   cb_ids = Libvirt::Connection::DOMAIN_EVENT_IDS.map do |event_id|
     op = OpenStruct.new(a: 'b', event_id: event_id)
-    c.register_domain_event_callback(event_id, nil, op) do |conn, dom, *args, opaque|
+    callback_id = c.register_domain_event_callback(event_id, nil, op) do |conn, dom, *args, opaque|
       Libvirt.logger.info { "DOMAIN EVENT #{event_id} conn=#{conn}, dom=#{dom}, args=#{args}, opaque=#{opaque}" }
     end
+    Libvirt.logger.info { "Registered domain event callback event_id=#{event_id} callback_id=#{callback_id}" }
+    callback_id
   end
   CB_IDS.concat(cb_ids)
 
@@ -92,12 +94,15 @@ Async do
   end
 
   ASYNC_REACTOR.after(20) do
+    Libvirt.logger.info { 'START Cleaning up!' }
+
     LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
 
       c = CONNS.first
       CB_IDS.each do |callback_id|
+        Libvirt.logger.info { "Start retrieving callback_id=#{callback_id}" }
         opaque = c.deregister_domain_event_callback(callback_id)
-        puts "Retrieved opaque #{opaque}"
+        Libvirt.logger.info { "Retrieved opaque=#{opaque}" }
       end
       Libvirt.logger.info { 'Cleaning up!' }
       CONNS = []
@@ -105,6 +110,6 @@ Async do
       CB_IDS = []
       GC.start
 
-    end
+    end.run
   end
 end

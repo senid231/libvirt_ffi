@@ -133,7 +133,9 @@ module Libvirt
       result = FFI::Domain.virConnectDomainEventDeregisterAny(@conn_ptr, callback_id)
       raise Error, "Couldn't deregister domain event callback" if result < 0
 
-      STORAGE.remove_struct(connection_pointer: @conn_ptr, callback_id: callback_id)
+      # virConnectDomainEventDeregisterAny will call free func
+      # So we don't need to remove object from STORAGE here.
+      true
     end
 
     def lib_version
