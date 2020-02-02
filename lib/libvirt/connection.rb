@@ -6,20 +6,20 @@ module Libvirt
 
     STORAGE = DomainCallbackStorage.new
 
-    DOMAIN_EVENT_CALLBACKS = FFI::Domain.enum_type(:event_id).symbol_map.map do |name, event_id|
-      func = FFI::Domain.event_callback(event_id) do |conn_ptr, dom_ptr, *args, op_ptr|
+    DOMAIN_EVENT_CALLBACKS = DOMAIN_EVENT_IDS.map do |event_id_sym|
+      func = FFI::Domain.event_callback_for(event_id_sym) do |conn_ptr, dom_ptr, *args, op_ptr|
         connection = Connection.load_ref(conn_ptr)
         domain = Domain.load_ref(dom_ptr)
         block, opaque = STORAGE.retrieve_from_pointer(op_ptr)
         block.call(connection, domain, *args, opaque)
       end
-      [name, func]
-    end.to_h
+      [event_id_sym, func]
+    end.to_h.freeze
 
     def self.load_ref(conn_ptr)
       ref_result = FFI::Connection.virConnectRef(conn_ptr)
       raise Error, "Couldn't retrieve connection reference" if ref_result < 0
-      new(nil).send(:set_connection, conn_ptr)
+      new(nil).tap { |r| r.send(:set_connection, conn_ptr) }
     end
 
     def initialize(uri)
@@ -27,6 +27,7 @@ module Libvirt
       @conn_ptr = ::FFI::Pointer.new(0)
 
       free = ->(obj_id) do
+        Util.log(:debug) { "Finalize Libvirt::Connection 0x#{obj_id.to_s(16)} @conn_ptr=#{@conn_ptr}," }
         return if @conn_ptr.null?
         cl_result = FFI::Connection.virConnectClose(@conn_ptr)
         STDERR.puts "Couldn't close Libvirt::Connection (0x#{obj_id.to_s(16)}) pointer #{@conn_ptr.address}" if cl_result < 0

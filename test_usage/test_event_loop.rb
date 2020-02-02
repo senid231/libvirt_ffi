@@ -24,9 +24,11 @@ Libvirt.logger = Logger.new(STDOUT, formatter: LogFormatter.new)
 Libvirt.logger.level = ENV['DEBUG'] ? :debug : :info
 
 IMPL = LibvirtAsync::Implementations.new
-CONNS = []
-DOMS = []
-CB_IDS = []
+OBJECTS = {
+    hv: nil,
+    domains: [],
+    cb_ids: []
+}
 
 Async do
   ASYNC_REACTOR = Async::Task.current.reactor
@@ -36,18 +38,17 @@ Async do
 
   IMPL.start
 
-  c = Libvirt::Connection.new('qemu+tcp://localhost:16510/system')
-  c.open
-  res = c.set_keep_alive(2, 1)
+  OBJECTS[:hv] = Libvirt::Connection.new('qemu+tcp://localhost:16510/system')
+  OBJECTS[:hv].open
+  res = OBJECTS[:hv].set_keep_alive(2, 1)
   Libvirt.logger.info {  "set_keep_alive #{res}" }
-  CONNS.push(c)
 
-  puts "Connection version #{c.version.inspect}"
-  puts "Connection lib_version #{c.lib_version.inspect}"
-  puts "Connection hostname #{c.hostname.inspect}"
-  puts "Connection max_vcpus #{c.max_vcpus.inspect}"
-  puts "Connection capabilities #{c.capabilities.inspect}"
-  node_info = c.node_info
+  puts "Connection version #{OBJECTS[:hv].version.inspect}"
+  puts "Connection lib_version #{OBJECTS[:hv].lib_version.inspect}"
+  puts "Connection hostname #{OBJECTS[:hv].hostname.inspect}"
+  puts "Connection max_vcpus #{OBJECTS[:hv].max_vcpus.inspect}"
+  puts "Connection capabilities #{OBJECTS[:hv].capabilities.inspect}"
+  node_info = OBJECTS[:hv].node_info
   puts "Connection nodeInfo #{node_info}"
   puts "NodeInfo model #{node_info.model.inspect}"
   puts "NodeInfo cpus #{node_info.cpus.inspect}"
@@ -58,23 +59,21 @@ Async do
   puts "NodeInfo threads #{node_info.threads.inspect}"
   puts "NodeInfo memory #{node_info.memory.inspect}"
 
-  cb_ids = Libvirt::Connection::DOMAIN_EVENT_IDS.map do |event_id|
+  Libvirt::Connection::DOMAIN_EVENT_IDS.map do |event_id|
     op = OpenStruct.new(a: 'b', event_id: event_id)
-    callback_id = c.register_domain_event_callback(event_id, nil, op) do |conn, dom, *args, opaque|
+    callback_id = OBJECTS[:hv].register_domain_event_callback(event_id, nil, op) do |conn, dom, *args, opaque|
       Libvirt.logger.info { "DOMAIN EVENT #{event_id} conn=#{conn}, dom=#{dom}, args=#{args}, opaque=#{opaque}" }
     end
     Libvirt.logger.info { "Registered domain event callback event_id=#{event_id} callback_id=#{callback_id}" }
-    callback_id
+    OBJECTS[:cb_ids] << callback_id
   end
-  CB_IDS.concat(cb_ids)
 
-  puts "domains qty #{c.list_all_domains_qty}"
+  puts "domains qty #{OBJECTS[:hv].list_all_domains_qty}"
 
-  domains = c.list_all_domains
-  DOMS.concat(domains)
-  puts "Domains (#{domains.size}): #{domains}"
+  OBJECTS[:domains] = OBJECTS[:hv].list_all_domains
+  puts "Domains (#{OBJECTS[:domains].size}): #{OBJECTS[:domains]}"
 
-  d = domains.first
+  d = OBJECTS[:domains].first
   puts "Domain uuid #{d.uuid.inspect}"
   puts "Domain name #{d.name.inspect}"
   puts "Domain get_state #{d.get_state.inspect}"
@@ -98,17 +97,22 @@ Async do
 
     LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
 
-      c = CONNS.first
-      CB_IDS.each do |callback_id|
+      OBJECTS[:cb_ids].each do |callback_id|
         Libvirt.logger.info { "Start retrieving callback_id=#{callback_id}" }
-        opaque = c.deregister_domain_event_callback(callback_id)
+        opaque = OBJECTS[:hv].deregister_domain_event_callback(callback_id)
         Libvirt.logger.info { "Retrieved opaque=#{opaque}" }
       end
       Libvirt.logger.info { 'Cleaning up!' }
-      CONNS = []
-      DOMS = []
-      CB_IDS = []
+      OBJECTS[:hv] = nil
+      OBJECTS[:domains] = []
+      OBJECTS[:cb_ids] = []
+      Libvirt.logger.info { "GC.start 1" }
       GC.start
+
+      ASYNC_REACTOR << LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
+        Libvirt.logger.info { "GC.start 2" }
+        GC.start
+      end.fiber
 
     end.run
   end

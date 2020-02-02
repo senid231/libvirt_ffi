@@ -12,6 +12,7 @@ module Libvirt
       @opaque = nil
 
       free = ->(obj_id) do
+        Util.log(:debug) { "Finalize Libvirt::Stream 0x#{obj_id.to_s(16)} @stream_ptr=#{@stream_ptr}, @cb=#{@cb}, @opaque=#{@opaque}," }
         return unless @stream_ptr
         if @cb
           rcb_result = FFI::Stream.virStreamEventRemoveCallback(@stream_ptr)

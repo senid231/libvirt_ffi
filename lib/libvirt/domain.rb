@@ -13,6 +13,7 @@ module Libvirt
       @dom_ptr = dom_ptr
 
       free = ->(obj_id) do
+        Util.log(:debug) { "Finalize Libvirt::Domain 0x#{obj_id.to_s(16)} @dom_ptr=#{@dom_ptr}," }
         return unless @dom_ptr
         fr_result = FFI::Domain.virDomainFree(@dom_ptr)
         STDERR.puts "Couldn't free Libvirt::Domain (0x#{obj_id.to_s(16)}) pointer #{@dom_ptr.address}" if fr_result < 0
