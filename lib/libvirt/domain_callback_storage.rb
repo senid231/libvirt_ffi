@@ -20,7 +20,7 @@ module Libvirt
 
       cb_data_ptr = ::FFI::MemoryPointer.new(:char, CallbackDataStruct.size, false)
       cb_data = CallbackDataStruct.new(cb_data_ptr)
-      cb_data_free_func = ::FFI::Function.new(:void, [:pointer]) do |pointer|
+      cb_data_free_func = FFI::Common.free_function do |pointer|
         dbg { "Libvirt::DomainCallbackStorage cb_data_free_func triggered" }
         remove_struct(pointer)
       end

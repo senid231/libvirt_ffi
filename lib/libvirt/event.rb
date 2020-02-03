@@ -59,6 +59,11 @@ module Libvirt
       true
     end
 
+    def schedule_operation(&block)
+      t = Async::Task.new(Async::Task.current.reactor, nil, &block)
+      t.reactor << t.fiber
+    end
+
     def register(add_handle:, update_handle:, remove_handle:, add_timer:, update_timer:, remove_timer:)
       @add_handle = add_handle
       @update_handle = update_handle
@@ -67,12 +72,12 @@ module Libvirt
       @update_timer = update_timer
       @remove_timer = remove_timer
 
-      @add_handle_cb = FFI::Event.event_add_handle_func(&method(:_add_handle).to_proc)
-      @update_handle_cb = ::FFI::Function.new(:void, [:int, :int], &method(:_update_handle).to_proc)
-      @remove_handle_cb = ::FFI::Function.new(:int, [:int], &method(:_remove_handle).to_proc)
-      @add_timer_cb = FFI::Event.event_add_timeout_func(&method(:_add_timer).to_proc)
-      @update_timer_cb = ::FFI::Function.new(:void, [:int, :int], &method(:_update_timer).to_proc)
-      @remove_timer_cb = ::FFI::Function.new(:int, [:int], &method(:_remove_timer).to_proc)
+      @add_handle_cb = FFI::Event.callback_function(:virEventAddHandleFunc, &method(:_add_handle))
+      @update_handle_cb = FFI::Event.callback_function(:virEventUpdateHandleFunc, &method(:_update_handle))
+      @remove_handle_cb = FFI::Event.callback_function(:virEventRemoveHandleFunc, &method(:_remove_handle))
+      @add_timer_cb = FFI::Event.callback_function(:virEventAddTimeoutFunc, &method(:_add_timer))
+      @update_timer_cb = FFI::Event.callback_function(:virEventUpdateTimeoutFunc, &method(:_update_timer))
+      @remove_timer_cb = FFI::Event.callback_function(:virEventRemoveTimeoutFunc, &method(:_remove_timer))
 
       FFI::Event.virEventRegisterImpl(
           @add_handle_cb,
@@ -103,7 +108,10 @@ module Libvirt
       op = @remove_handle.call(watch)
       free_func = op.ff
       opaque = op.opaque
-      free_func.call(opaque) unless free_func.null?
+      schedule_operation do
+        dbg { "REMOVE_HANDLE delayed free_func watch=#{watch}" }
+        free_func.call(opaque) unless free_func.null?
+      end
       0
     end
 
@@ -123,7 +131,10 @@ module Libvirt
       op = @remove_timer.call(timer)
       free_func = op.ff
       opaque = op.opaque
-      free_func.call(opaque) unless free_func.null?
+      schedule_operation do
+        dbg { "REMOVE_TIMER async free_func timer=#{timer}" }
+        free_func.call(opaque) unless free_func.null?
+      end
       0
     end
 

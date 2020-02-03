@@ -4,6 +4,7 @@ module Libvirt
   module FFI
     module Libvirt
       extend ::FFI::Library
+      extend Helpers
       ffi_lib Util.library_path
 
       # int	virGetVersion	(

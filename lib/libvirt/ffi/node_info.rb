@@ -4,6 +4,7 @@ module Libvirt
   module FFI
     module NodeInfo
       extend ::FFI::Library
+      extend Helpers
       ffi_lib Util.library_path
 
       # struct virNodeInfo {

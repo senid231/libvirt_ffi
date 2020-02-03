@@ -4,6 +4,7 @@ module Libvirt
   module FFI
     module Connection
       extend ::FFI::Library
+      extend Helpers
       ffi_lib Util.library_path
 
       # struct virNodeInfo {
@@ -38,6 +39,13 @@ module Libvirt
           @node_info_struct[attr]
         end
       end
+
+      # typedef void	(*virConnectCloseFunc) (
+      #   virConnectPtr conn,
+      # 	int reason,
+      # 	void * opaque
+      # )
+      callback :virConnectCloseFunc, [:pointer, :int, :pointer], :void
 
       # virConnectPtr	virConnectOpen (const char * name)
       attach_function :virConnectOpen, [:string], :pointer
@@ -84,6 +92,25 @@ module Libvirt
       #   virConnectPtr conn
       # )
       attach_function :virConnectClose, [:pointer], :int
+
+      # int	virConnectRegisterCloseCallback	(
+      #   virConnectPtr conn,
+      # 	virConnectCloseFunc cb,
+      # 	void * opaque,
+      # 	virFreeCallback freecb
+      # )
+      attach_function :virConnectRegisterCloseCallback, [
+          :pointer,
+          :virConnectCloseFunc,
+          :pointer,
+          FFI::Common::FREE_CALLBACK
+      ], :int
+
+      # int	virConnectUnregisterCloseCallback	(
+      #   virConnectPtr conn,
+      # 	virConnectCloseFunc cb
+      # )
+      attach_function :virConnectUnregisterCloseCallback, [:pointer, :pointer], :int
 
       # int	virConnectRef	(
       #   virConnectPtr conn

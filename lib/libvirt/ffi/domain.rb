@@ -4,6 +4,7 @@ module Libvirt
   module FFI
     module Domain
       extend ::FFI::Library
+      extend Helpers
       ffi_lib Util.library_path
 
       UUID_STRING_BUFLEN = 0x80 # RFC4122
@@ -617,7 +618,7 @@ module Libvirt
       # @return [FFI::Function]
       def self.event_callback_base(event_id_sym, &block)
         callback_name = EVENT_ID_TO_CALLBACK.fetch(event_id_sym)
-        function_for(callback_name) do |*args|
+        callback_function(callback_name) do |*args|
           Util.log(:debug) { "Libvirt::Domain #{event_id_sym} CALLBACK #{args.map(&:to_s).join(', ')}," }
           block.call(*args)
         end
@@ -628,22 +629,12 @@ module Libvirt
       # @yield connect_ptr, domain_ptr, event, detail, opaque_ptr
       # @return [FFI::Function]
       def self.event_callback(&block)
-        function_for(:virConnectDomainEventCallback) do |conn, dom, event, detail, opaque|
+        callback_function(:virConnectDomainEventCallback) do |conn, dom, event, detail, opaque|
           detail_sym = event_detail_type(event, detail)
           Util.log(:debug) { "Libvirt::Domain LIFECYCLE CALLBACK #{conn}, #{dom}, #{event}, #{detail_sym}, #{opaque}," }
           block.call(conn, dom, event, detail_sym, opaque)
           0
         end
-      end
-
-      # Creates function by provided callback name
-      # @param callback_name [Symbol] callback name registered in current module
-      # @param args [Array] extra arguments for FFI::Function
-      # @yield when function is called
-      # @return [FFI::Function]
-      def self.function_for(callback_name, *args, &block)
-        callback_info = find_type(callback_name)
-        ::FFI::Function.new(callback_info.result_type, callback_info.param_types, *args, &block)
       end
 
     end

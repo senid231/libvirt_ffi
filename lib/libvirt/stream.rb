@@ -39,7 +39,7 @@ module Libvirt
       raise Error, 'callback already added' unless @cb.nil?
 
       @opaque = opaque
-      @cb = ::FFI::Function.new(:void, [:pointer, :int, :pointer]) do |_stream_ptr, evs, _op|
+      @cb = FFI::Stream.callback_function(:virStreamEventCallback) do |_stream_ptr, evs, _op|
         # stream = Stream.new(stream_ptr)
         block.call(self, evs, @opaque)
       end

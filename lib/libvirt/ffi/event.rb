@@ -4,6 +4,7 @@ module Libvirt
   module FFI
     module Event
       extend ::FFI::Library
+      extend Helpers
       ffi_lib Util.library_path
 
       # typedef void (*virEventHandleCallback)	(
@@ -86,14 +87,6 @@ module Libvirt
           :virEventUpdateTimeoutFunc,
           :virEventRemoveTimeoutFunc
       ], :void
-
-      def self.event_add_handle_func(&block)
-        ::FFI::Function.new(:int, [:int, :int, EVENT_HANDLE_CALLBACK, :pointer, FFI::Common::FREE_CALLBACK], &block)
-      end
-
-      def self.event_add_timeout_func(&block)
-        ::FFI::Function.new(:int, [:int, EVENT_TIMEOUT_CALLBACK, :pointer, FFI::Common::FREE_CALLBACK], &block)
-      end
 
     end
   end

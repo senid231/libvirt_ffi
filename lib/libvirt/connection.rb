@@ -25,6 +25,7 @@ module Libvirt
     def initialize(uri)
       @uri = uri
       @conn_ptr = ::FFI::Pointer.new(0)
+      @close_data = nil
 
       free = ->(obj_id) do
         Util.log(:debug) { "Finalize Libvirt::Connection 0x#{obj_id.to_s(16)} @conn_ptr=#{@conn_ptr}," }
@@ -93,6 +94,22 @@ module Libvirt
       raise Error, "Couldn't retrieve domains list with flags #{flags.to_s(16)}" if result < 0
       ptr = domains_ptr.read_pointer
       ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr) }
+    end
+
+    def register_close_callback(opaque = nil, &block)
+      dbg { "#register_close_callback opaque=#{opaque}" }
+      raise ArgumentError, 'close function already registered' if @close_data
+
+      @close_data = { opaque: opaque, block: block }
+      @close_cb = FFI::Connection.callback_function(:virConnectCloseFunc) do |_conn, reason, _op|
+        dbg { "CONNECTION CLOSED @conn_ptr=#{@conn_ptr} reason=#{reason}" }
+        @close_data[:block].call(self, reason, @close_data[:opaque])
+      end
+      @close_free_func = FFI::Common.free_function do
+        dbg { "CONNECTION CLOSED FREE FUNC @conn_ptr=#{@conn_ptr}" }
+        @close_cb = @close_free_func = @close_data = nil
+      end
+      FFI::Connection.virConnectRegisterCloseCallback(@conn_ptr, @close_cb, nil, @close_free_func)
     end
 
     # @yield conn, dom, *args
