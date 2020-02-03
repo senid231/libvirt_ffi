@@ -60,17 +60,17 @@ module Libvirt
     end
 
     def schedule_operation(&block)
-      t = Async::Task.new(Async::Task.current.reactor, nil, &block)
-      t.reactor << t.fiber
+      @schedule.call(&block)
     end
 
-    def register(add_handle:, update_handle:, remove_handle:, add_timer:, update_timer:, remove_timer:)
+    def register(add_handle:, update_handle:, remove_handle:, add_timer:, update_timer:, remove_timer:, schedule:)
       @add_handle = add_handle
       @update_handle = update_handle
       @remove_handle = remove_handle
       @add_timer = add_timer
       @update_timer = update_timer
       @remove_timer = remove_timer
+      @schedule = schedule
 
       @add_handle_cb = FFI::Event.callback_function(:virEventAddHandleFunc, &method(:_add_handle))
       @update_handle_cb = FFI::Event.callback_function(:virEventUpdateHandleFunc, &method(:_update_handle))
