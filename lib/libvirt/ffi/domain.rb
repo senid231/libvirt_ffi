@@ -588,6 +588,40 @@ module Libvirt
           :pointer
       ], :void
 
+      # int	virDomainReboot (
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainReboot, [:pointer, :int], :int
+
+      # int	virDomainShutdownFlags (
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainShutdownFlags, [:pointer, :int], :int
+
+      # int	virDomainDestroyFlags	(
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainDestroyFlags, [:pointer, :int], :int
+
+      # int	virDomainReset (
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainReset, [:pointer, :int], :int
+
+      # int	virDomainSuspend (
+      #   virDomainPtr domain
+      # )
+      attach_function :virDomainSuspend, [:pointer], :int
+
+      # int	virDomainResume	(
+      #   virDomainPtr domain
+      # )
+      attach_function :virDomainResume, [:pointer], :int
+
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
       # @param detail [Integer]

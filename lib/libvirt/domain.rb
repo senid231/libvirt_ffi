@@ -83,6 +83,36 @@ module Libvirt
       @dom_ptr = nil
     end
 
+    def reboot(flags = 0)
+      result = FFI::Domain.virDomainReboot(@dom_ptr, flags)
+      raise Error, "Couldn't reboot domain" if result < 0
+    end
+
+    def shutdown(flags = 0)
+      result = FFI::Domain.virDomainShutdownFlags(@dom_ptr, flags)
+      raise Error, "Couldn't shutdown domain" if result < 0
+    end
+
+    def power_off(flags = 0)
+      result = FFI::Domain.virDomainDestroyFlags(@dom_ptr, flags)
+      raise Error, "Couldn't power off domain" if result < 0
+    end
+
+    def reset(flags = 0)
+      result = FFI::Domain.virDomainReset(@dom_ptr, flags)
+      raise Error, "Couldn't reset domain" if result < 0
+    end
+
+    def suspend
+      result = FFI::Domain.virDomainSuspend(@dom_ptr)
+      raise Error, "Couldn't suspend domain" if result < 0
+    end
+
+    def resume
+      result = FFI::Domain.virDomainResume(@dom_ptr)
+      raise Error, "Couldn't resume domain" if result < 0
+    end
+
     private
 
     def dbg(&block)
