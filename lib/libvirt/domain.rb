@@ -26,7 +26,9 @@ module Libvirt
       reason = ::FFI::MemoryPointer.new(:int)
       result = FFI::Domain.virDomainGetState(@dom_ptr, state, reason, 0)
       raise Error, "Couldn't get domain state" if result < 0
-      [state.read_int, reason.read_int]
+      state_sym = FFI::Domain.enum_type(:state)[state.read_int]
+      reason_sym = FFI::Domain.state_reason(state_sym, reason.read_int)
+      [state_sym, reason_sym]
     end
 
     def to_ptr
@@ -81,6 +83,11 @@ module Libvirt
       result = FFI::Domain.virDomainFree(@dom_ptr)
       raise Error, "Couldn't free domain" if result < 0
       @dom_ptr = nil
+    end
+
+    def start(flags = 0)
+      result = FFI::Domain.virDomainCreateWithFlags(@dom_ptr, flags)
+      raise Error, "Couldn't start domain" if result < 0
     end
 
     def reboot(flags = 0)

@@ -434,8 +434,14 @@ module LibvirtAsync
           remove_handle: method(:remove_handle).to_proc,
           add_timer: method(:add_timer).to_proc,
           update_timer: method(:update_timer).to_proc,
-          remove_timer: method(:remove_timer).to_proc
+          remove_timer: method(:remove_timer).to_proc,
+          schedule: method(:schedule).to_proc
       )
+    end
+
+    def schedule(&block)
+      task = Async::Task.new(Async::Task.current.reactor, nil, &block)
+      task.reactor << task.fiber
     end
 
     def add_handle(fd, events, opaque)

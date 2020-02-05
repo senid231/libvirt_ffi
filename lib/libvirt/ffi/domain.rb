@@ -78,6 +78,80 @@ module Libvirt
           :PMSUSPENDED, 0x7 # the domain is suspended by guest power management
       ]
 
+
+      # enum virDomainNostateReason
+      enum :nostate_reason, [
+          :UNKNOWN, 0x0
+      ]
+
+      # enum virDomainRunningReason
+      enum :running_reason, [
+          :UNKNOWN, 0x0,
+          :BOOTED, 0x1, # normal startup from boot
+          :MIGRATED, 0x2, # migrated from another host
+          :RESTORED, 0x3, # restored from a state file
+          :FROM_SNAPSHOT, 0x4, # restored from snapshot
+          :UNPAUSED, 0x5, # returned from paused state
+          :MIGRATION_CANCELED, 0x6, # returned from migration
+          :SAVE_CANCELED, 0x7, # returned from failed save process
+          :WAKEUP, 0x8, # returned from pmsuspended due to wakeup event
+          :CRASHED, 0x9, # resumed from crashed
+          :POSTCOPY, 0xa # running in post-copy migration mode
+      ]
+
+      # enum virDomainBlockedReason
+      enum :blocked_reason, [
+          :UNKNOWN, 0x0 # the reason is unknown
+      ]
+
+      # enum virDomainPausedReason
+      enum :paused_reason, [
+          :UNKNOWN, 0x0, # the reason is unknown
+          :USER, 0x1, # paused on user request
+          :MIGRATION, 0x2, # paused for offline migration
+          :SAVE, 0x3, # paused for save
+          :DUMP, 0x4, # paused for offline core dump
+          :IOERROR, 0x5, # paused due to a disk I/O error
+          :WATCHDOG, 0x6, # paused due to a watchdog event
+          :FROM_SNAPSHOT, 0x7, # paused after restoring from snapshot
+          :SHUTTING_DOWN, 0x8, # paused during shutdown process
+          :SNAPSHOT, 0x9, # paused while creating a snapshot
+          :CRASHED, 0xa, # paused due to a guest crash
+          :STARTING_UP, 0xb, # the domain is being started
+          :POSTCOPY, 0xc, # paused for post-copy migration
+          :POSTCOPY_FAILED, 0xd # paused after failed post-copy
+      ]
+
+      # enum virDomainShutdownReason
+      enum :shutdown_reason, [
+          :UNKNOWN, 0x0, # the reason is unknown
+          :USER, 0x1 # shutting down on user request
+      ]
+
+      # enum virDomainShutoffReason
+      enum :shutoff_reason, [
+          :UNKNOWN, 0x0, # the reason is unknown
+          :SHUTDOWN, 0x1, # normal shutdown
+          :DESTROYED, 0x2, # forced poweroff
+          :CRASHED, 0x3, # domain crashed
+          :MIGRATED, 0x4, # migrated to another host
+          :SAVED, 0x5, # saved to a file
+          :FAILED, 0x6, # domain failed to start
+          :FROM_SNAPSHOT, 0x7, # restored from a snapshot which was taken while domain was shutoff
+          :DAEMON, 0x8 # daemon decides to kill domain during reconnection processing
+      ]
+
+      # enum virDomainCrashedReason
+      enum :crashed_reason, [
+          :UNKNOWN, 0x0, # crashed for unknown reason
+          :PANICKED, 0x1 # domain panicked
+      ]
+
+      # enum virDomainPMSuspendedReason
+      enum :pmsuspended_reason, [
+          :UNKNOWN, 0x0
+      ]
+
       # enum virDomainEventType
       enum :event_type, [
           :DEFINED, 0x0,
@@ -622,6 +696,12 @@ module Libvirt
       # )
       attach_function :virDomainResume, [:pointer], :int
 
+      # int	virDomainCreateWithFlags (
+      #   virDomainPtr domain,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainCreateWithFlags, [:pointer, :int], :int
+
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
       # @param detail [Integer]
@@ -629,6 +709,11 @@ module Libvirt
       def self.event_detail_type(event, detail)
         detail_enum = enum_type(:"event_#{event.to_s.downcase}_detail_type")
         detail_enum[detail]
+      end
+
+      def self.state_reason(state, reason)
+        reason_enum = enum_type(:"#{state.to_s.downcase}_reason")
+        reason_enum[reason]
       end
 
       # Creates event callback function for provided event_id

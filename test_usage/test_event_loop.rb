@@ -79,7 +79,7 @@ Async do
   puts "Domain get_state #{d.get_state.inspect}"
   puts "Domain get_cpus #{d.max_vcpus.inspect}"
   puts "Domain max_memory #{d.max_memory.inspect}"
-  puts "Domain xml_desc #{d.xml_desc.inspect}"
+  # puts "Domain xml_desc #{d.xml_desc.inspect}"
 
   # ASYNC_REACTOR.every(10) do
   #   LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) { IMPL.print_debug_info }.run
@@ -92,28 +92,77 @@ Async do
     # Libvirt.logger.info { "MEM USAGE: #{GetProcessMem.new.mb} MB" }
   end
 
-  ASYNC_REACTOR.after(20) do
-    Libvirt.logger.info { 'START Cleaning up!' }
+  # ASYNC_REACTOR.after(20) do
+  #   Libvirt.logger.info { 'START Cleaning up!' }
+  #
+  #   LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
+  #
+  #     OBJECTS[:cb_ids].each do |callback_id|
+  #       Libvirt.logger.info { "Start retrieving callback_id=#{callback_id}" }
+  #       opaque = OBJECTS[:hv].deregister_domain_event_callback(callback_id)
+  #       Libvirt.logger.info { "Retrieved opaque=#{opaque}" }
+  #     end
+  #     Libvirt.logger.info { 'Cleaning up!' }
+  #     OBJECTS[:hv] = nil
+  #     OBJECTS[:domains] = []
+  #     OBJECTS[:cb_ids] = []
+  #     Libvirt.logger.info { "GC.start 1" }
+  #     GC.start
+  #
+  #     ASYNC_REACTOR << LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
+  #       Libvirt.logger.info { "GC.start 2" }
+  #       GC.start
+  #     end.fiber
+  #
+  #   end.run
+  # end
 
-    LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
-
-      OBJECTS[:cb_ids].each do |callback_id|
-        Libvirt.logger.info { "Start retrieving callback_id=#{callback_id}" }
-        opaque = OBJECTS[:hv].deregister_domain_event_callback(callback_id)
-        Libvirt.logger.info { "Retrieved opaque=#{opaque}" }
-      end
-      Libvirt.logger.info { 'Cleaning up!' }
-      OBJECTS[:hv] = nil
-      OBJECTS[:domains] = []
-      OBJECTS[:cb_ids] = []
-      Libvirt.logger.info { "GC.start 1" }
-      GC.start
-
-      ASYNC_REACTOR << LibvirtAsync::Util.create_task(nil, ASYNC_REACTOR) do
-        Libvirt.logger.info { "GC.start 2" }
-        GC.start
-      end.fiber
-
-    end.run
+  begin
+    puts 'DOM starting...'
+    d.start
+    puts 'DOM started'
+  rescue Libvirt::Error => e
+    STDERR.puts "error starting: #{e.message}"
   end
+
+  ASYNC_REACTOR.sleep 10
+  puts "DOMAIN state #{d.get_state} before shutdown"
+  d.shutdown(1)
+  puts 'DOM shutdown 1'
+  puts "DOMAIN state #{d.get_state} after shutdown"
+
+  ASYNC_REACTOR.sleep 10
+  puts "DOMAIN state #{d.get_state}"
+  d.start
+  puts 'DOM start'
+
+  ASYNC_REACTOR.sleep 10
+  puts "DOMAIN state #{d.get_state}"
+  d.reboot
+  puts 'DOM reboot'
+
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state}"
+  d.suspend
+  puts 'DOM suspend'
+
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state}"
+  d.resume
+  puts 'DOM resume'
+
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state}"
+  d.reset
+  puts 'DOM reset'
+
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state}"
+  d.power_off
+  puts 'DOM power_off'
+
+  ASYNC_REACTOR.sleep 5
+  d.start
+  puts 'DOM start'
+
 end
