@@ -95,7 +95,7 @@ module Libvirt
       raise Error, "Couldn't reboot domain" if result < 0
     end
 
-    def shutdown(flags = 0)
+    def shutdown(flags = :ACPI_POWER_BTN)
       result = FFI::Domain.virDomainShutdownFlags(@dom_ptr, flags)
       raise Error, "Couldn't shutdown domain" if result < 0
     end
@@ -118,6 +118,13 @@ module Libvirt
     def resume
       result = FFI::Domain.virDomainResume(@dom_ptr)
       raise Error, "Couldn't resume domain" if result < 0
+    end
+
+    # After save_memory(:PAUSED) you need to call #start and #resume
+    # to move domain to the running state.
+    def save_memory(flags = :PAUSED)
+      result = FFI::Domain.virDomainManagedSave(@dom_ptr, flags)
+      raise Error, "Couldn't save domain memory" if result < 0
     end
 
     private

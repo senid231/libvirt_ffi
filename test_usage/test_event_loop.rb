@@ -125,44 +125,58 @@ Async do
     STDERR.puts "error starting: #{e.message}"
   end
 
-  ASYNC_REACTOR.sleep 10
-  puts "DOMAIN state #{d.get_state} before shutdown"
-  d.shutdown(1)
-  puts 'DOM shutdown 1'
-  puts "DOMAIN state #{d.get_state} after shutdown"
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state} before save_memory"
+  d.save_memory
+  puts "DOMAIN state #{d.get_state} after save_memory"
 
-  ASYNC_REACTOR.sleep 10
-  puts "DOMAIN state #{d.get_state}"
+  ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state} before start"
   d.start
-  puts 'DOM start'
+  puts "DOMAIN state #{d.get_state} after start"
 
-  ASYNC_REACTOR.sleep 10
-  puts "DOMAIN state #{d.get_state}"
-  d.reboot
-  puts 'DOM reboot'
-
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state}"
-  d.suspend
-  puts 'DOM suspend'
-
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state}"
+  #ASYNC_REACTOR.sleep 5
+  puts "DOMAIN state #{d.get_state} before resume"
   d.resume
-  puts 'DOM resume'
+  puts "DOMAIN state #{d.get_state} after resume"
 
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state}"
-  d.reset
-  puts 'DOM reset'
-
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state}"
-  d.power_off
-  puts 'DOM power_off'
-
-  ASYNC_REACTOR.sleep 5
-  d.start
-  puts 'DOM start'
+  # ASYNC_REACTOR.sleep 10
+  # puts "DOMAIN state #{d.get_state} before shutdown"
+  # d.shutdown(1)
+  # puts "DOMAIN state #{d.get_state} after shutdown"
+  #
+  # ASYNC_REACTOR.sleep 10
+  # puts "DOMAIN state #{d.get_state}"
+  # d.start
+  # puts 'DOM start'
+  #
+  # ASYNC_REACTOR.sleep 10
+  # puts "DOMAIN state #{d.get_state}"
+  # d.reboot
+  # puts 'DOM reboot'
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state}"
+  # d.suspend
+  # puts 'DOM suspend'
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state}"
+  # d.resume
+  # puts 'DOM resume'
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state}"
+  # d.reset
+  # puts 'DOM reset'
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state}"
+  # d.power_off
+  # puts 'DOM power_off'
+  #
+  # ASYNC_REACTOR.sleep 5
+  # d.start
+  # puts 'DOM start'
 
 end

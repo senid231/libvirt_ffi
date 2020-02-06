@@ -238,6 +238,25 @@ module Libvirt
           :PANICKED, 0x0 # Guest was panicked
       ]
 
+      # enum virDomainSaveRestoreFlags
+      enum :save_restore_flags, [
+          :BYPASS_CACHE, 0x1, # Avoid file system cache pollution
+          :RUNNING, 0x2, # Favor running over paused
+          :PAUSED, 0x4 # Favor paused over running
+      ]
+
+      # enum virDomainShutdownFlagValues
+      enum :shutdown_flags, [
+        :DEFAULT, 0x0, # hypervisor choice
+        :ACPI_POWER_BTN, 0x1, # Send ACPI event
+        :GUEST_AGENT, 0x2, # Use guest agent
+        :INITCTL, 0x4, # Use initctl
+        :SIGNAL, 0x8, # Send a signal
+        :PARAVIRT, 0x10 # Use paravirt guest control
+      ]
+
+
+
       # int	virDomainFree	(
       #   virDomainPtr domain
       # )
@@ -403,10 +422,10 @@ module Libvirt
           :pointer,
           :pointer,
           :int,
-          # virDomainEventGraphicsAddress
-          # virDomainEventGraphicsAddress
+          :pointer,
+          :pointer,
           :string,
-          # virDomainEventGraphicsSubject
+          :pointer,
           :pointer
       ], :void
 
@@ -555,7 +574,7 @@ module Libvirt
       callback :virConnectDomainEventTunableCallback, [
           :pointer,
           :pointer,
-          # virTypedParameterPtr
+          :pointer,
           :int,
           :pointer
       ], :void
@@ -611,7 +630,7 @@ module Libvirt
       callback :virConnectDomainEventJobCompletedCallback, [
           :pointer,
           :pointer,
-          # virTypedParameterPtr
+          :pointer,
           :int,
           :pointer
       ], :void
@@ -666,25 +685,25 @@ module Libvirt
       #   virDomainPtr domain,
       # 	unsigned int flags
       # )
-      attach_function :virDomainReboot, [:pointer, :int], :int
+      attach_function :virDomainReboot, [:pointer, :uint], :int
 
       # int	virDomainShutdownFlags (
       #   virDomainPtr domain,
       # 	unsigned int flags
       # )
-      attach_function :virDomainShutdownFlags, [:pointer, :int], :int
+      attach_function :virDomainShutdownFlags, [:pointer, :shutdown_flags], :int
 
       # int	virDomainDestroyFlags	(
       #   virDomainPtr domain,
       # 	unsigned int flags
       # )
-      attach_function :virDomainDestroyFlags, [:pointer, :int], :int
+      attach_function :virDomainDestroyFlags, [:pointer, :uint], :int
 
       # int	virDomainReset (
       #   virDomainPtr domain,
       # 	unsigned int flags
       # )
-      attach_function :virDomainReset, [:pointer, :int], :int
+      attach_function :virDomainReset, [:pointer, :uint], :int
 
       # int	virDomainSuspend (
       #   virDomainPtr domain
@@ -700,7 +719,13 @@ module Libvirt
       #   virDomainPtr domain,
       # 	unsigned int flags
       # )
-      attach_function :virDomainCreateWithFlags, [:pointer, :int], :int
+      attach_function :virDomainCreateWithFlags, [:pointer, :uint], :int
+
+      # int	virDomainManagedSave (
+      #   virDomainPtr dom,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainManagedSave, [:pointer, :save_restore_flags], :int
 
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
