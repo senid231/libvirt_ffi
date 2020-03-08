@@ -257,7 +257,14 @@ module Libvirt
         :PARAVIRT, 0x10 # Use paravirt guest control
       ]
 
-
+      # enum virDomainUndefineFlagsValues
+      enum :undefine_flags_values, [
+            :MANAGED_SAVE, 0x1, # Also remove any managed save
+            :SNAPSHOTS_METADATA, 0x2, # If last use of domain, then also remove any snapshot metadata
+            :NVRAM, 0x4, # Also remove any nvram file
+            :KEEP_NVRAM, 0x8, # Keep nvram file
+            :CHECKPOINTS_METADATA, 0x10 # If last use of domain, then also remove any checkpoint metadata Future undefine control flags should come here.
+      ]
 
       # int	virDomainFree	(
       #   virDomainPtr domain
@@ -728,6 +735,12 @@ module Libvirt
       # 	unsigned int flags
       # )
       attach_function :virDomainManagedSave, [:pointer, :save_restore_flags], :int
+
+      # int	virDomainUndefineFlags (
+      #   virDomainPtr domain,
+      #   unsigned int flags
+      # )
+      attach_function :virDomainUndefineFlags, [:pointer, :uint], :int
 
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)

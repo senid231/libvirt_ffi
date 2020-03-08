@@ -117,28 +117,32 @@ Async do
   #   end.run
   # end
 
-  begin
-    puts 'DOM starting...'
-    d.start
-    puts 'DOM started'
-  rescue Libvirt::Errors::LibError => e
-    STDERR.puts "error starting\n#{e.class}\n#{e.message}", e.error_data
-  end
+  # puts 'undefine DOM'
+  # d.undefine
+  # ASYNC_REACTOR.sleep 5
 
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state} before save_memory"
-  d.save_memory
-  puts "DOMAIN state #{d.get_state} after save_memory"
-
-  ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state} before start"
-  d.start
-  puts "DOMAIN state #{d.get_state} after start"
-
-  #ASYNC_REACTOR.sleep 5
-  puts "DOMAIN state #{d.get_state} before resume"
-  d.resume
-  puts "DOMAIN state #{d.get_state} after resume"
+  # begin
+  #   puts 'DOM starting...'
+  #   d.start
+  #   puts 'DOM started'
+  # rescue Libvirt::Errors::LibError => e
+  #   STDERR.puts "error starting\n#{e.class}\n#{e.message}", e.error_data
+  # end
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state} before save_memory"
+  # d.save_memory
+  # puts "DOMAIN state #{d.get_state} after save_memory"
+  #
+  # ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state} before start"
+  # d.start
+  # puts "DOMAIN state #{d.get_state} after start"
+  #
+  # #ASYNC_REACTOR.sleep 5
+  # puts "DOMAIN state #{d.get_state} before resume"
+  # d.resume
+  # puts "DOMAIN state #{d.get_state} after resume"
 
   # ASYNC_REACTOR.sleep 10
   # puts "DOMAIN state #{d.get_state} before shutdown"

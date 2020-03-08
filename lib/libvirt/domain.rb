@@ -120,6 +120,19 @@ module Libvirt
       raise Errors::LibError, "Couldn't resume domain" if result < 0
     end
 
+    # Undefine a domain.
+    # If the domain is running, it's converted to transient domain, without stopping it.
+    # If the domain is inactive, the domain configuration is removed.
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,nil]
+    # @see Libvirt::FFI::Domain enum :undefine_flags_values for acceptable keys
+    # @see Libvirt::Util.parse_flags for possible argument values
+    # @raise [Libvirt::Errors::LibError] if operation failed
+    def undefine(options_or_flags = nil)
+      flags = Libvirt::Util.parse_flags options_or_flags, FFI::Domain.enum_type(:undefine_flags_values)
+      result = FFI::Domain.virDomainUndefineFlags(@dom_ptr, flags)
+      raise Errors::LibError, "Couldn't resume domain" if result < 0
+    end
+
     # After save_memory(:PAUSED) you need to call #start and #resume
     # to move domain to the running state.
     def save_memory(flags = :PAUSED)
