@@ -17,7 +17,7 @@ module Libvirt
     end.to_h.freeze
 
     def self.load_ref(conn_ptr)
-      ref_result = FFI::Connection.virConnectRef(conn_ptr)
+      ref_result = FFI::Host.virConnectRef(conn_ptr)
       raise Error, "Couldn't retrieve connection reference" if ref_result < 0
       new(nil).tap { |r| r.send(:set_connection, conn_ptr) }
     end
@@ -30,20 +30,20 @@ module Libvirt
       free = ->(obj_id) do
         Util.log(:debug) { "Finalize Libvirt::Connection 0x#{obj_id.to_s(16)} @conn_ptr=#{@conn_ptr}," }
         return if @conn_ptr.null?
-        cl_result = FFI::Connection.virConnectClose(@conn_ptr)
+        cl_result = FFI::Host.virConnectClose(@conn_ptr)
         STDERR.puts "Couldn't close Libvirt::Connection (0x#{obj_id.to_s(16)}) pointer #{@conn_ptr.address}" if cl_result < 0
       end
       ObjectSpace.define_finalizer(self, free)
     end
 
     def open
-      @conn_ptr = FFI::Connection.virConnectOpen(@uri)
+      @conn_ptr = FFI::Host.virConnectOpen(@uri)
       raise Error, "Couldn't open connection to #{@uri.inspect}" if @conn_ptr.null?
       true
     end
 
     def close
-      result = FFI::Connection.virConnectClose(@conn_ptr)
+      result = FFI::Host.virConnectClose(@conn_ptr)
       raise Error, "Couldn't close connection to #{@uri.inspect}" if result < 0
       @conn_ptr = ::FFI::Pointer.new(0)
       true
@@ -61,14 +61,14 @@ module Libvirt
       check_open!
 
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
-      result = FFI::Connection.virConnectGetVersion(@conn_ptr, version_ptr)
+      result = FFI::Host.virConnectGetVersion(@conn_ptr, version_ptr)
       raise Error, "Couldn't retrieve connection version" if result < 0
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util::parse_version(version_number)
     end
 
     def set_keep_alive(interval, count)
-      result = FFI::Connection.virConnectSetKeepAlive(@conn_ptr, interval, count)
+      result = FFI::Host.virConnectSetKeepAlive(@conn_ptr, interval, count)
       raise Error, "Couldn't set connection keep_alive" if result < 0
       result == 0
     end
@@ -101,7 +101,7 @@ module Libvirt
       raise ArgumentError, 'close function already registered' if @close_data
 
       @close_data = { opaque: opaque, block: block }
-      @close_cb = FFI::Connection.callback_function(:virConnectCloseFunc) do |_conn, reason, _op|
+      @close_cb = FFI::Host.callback_function(:virConnectCloseFunc) do |_conn, reason, _op|
         dbg { "CONNECTION CLOSED @conn_ptr=#{@conn_ptr} reason=#{reason}" }
         @close_data[:block].call(self, reason, @close_data[:opaque])
       end
@@ -109,7 +109,7 @@ module Libvirt
         dbg { "CONNECTION CLOSED FREE FUNC @conn_ptr=#{@conn_ptr}" }
         @close_cb = @close_free_func = @close_data = nil
       end
-      FFI::Connection.virConnectRegisterCloseCallback(@conn_ptr, @close_cb, nil, @close_free_func)
+      FFI::Host.virConnectRegisterCloseCallback(@conn_ptr, @close_cb, nil, @close_free_func)
     end
 
     # @yield conn, dom, *args
@@ -158,28 +158,28 @@ module Libvirt
 
     def lib_version
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
-      result = FFI::Connection.virConnectGetLibVersion(@conn_ptr, version_ptr)
+      result = FFI::Host.virConnectGetLibVersion(@conn_ptr, version_ptr)
       raise Error, "Couldn't get connection lib version" if result < 0
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util.parse_version(version_number)
     end
 
     def hostname
-      FFI::Connection.virConnectGetHostname(@conn_ptr)
+      FFI::Host.virConnectGetHostname(@conn_ptr)
     end
 
     # @param type [String,NilClass]
     def max_vcpus(type = nil)
-      FFI::Connection.virConnectGetMaxVcpus(@conn_ptr, type)
+      FFI::Host.virConnectGetMaxVcpus(@conn_ptr, type)
     end
 
     def capabilities
-      FFI::Connection.virConnectGetCapabilities(@conn_ptr)
+      FFI::Host.virConnectGetCapabilities(@conn_ptr)
     end
 
     def node_info
-      node_info_ptr = ::FFI::MemoryPointer.new(FFI::NodeInfo::Struct.by_value)
-      result = FFI::NodeInfo.virNodeGetInfo(@conn_ptr, node_info_ptr)
+      node_info_ptr = ::FFI::MemoryPointer.new(FFI::Host::NodeInfoStruct.by_value)
+      result = FFI::Host.virNodeGetInfo(@conn_ptr, node_info_ptr)
       raise Error, "Couldn't get connection node info" if result < 0
       NodeInfo.new(node_info_ptr)
     end

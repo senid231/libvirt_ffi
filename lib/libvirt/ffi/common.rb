@@ -3,6 +3,8 @@
 module Libvirt
   module FFI
     module Common
+      # https://libvirt.org/html/libvirt-libvirt-common.html
+
       extend ::FFI::Library
       extend Helpers
       ffi_lib Util.library_path

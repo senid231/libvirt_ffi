@@ -3,6 +3,8 @@
 module Libvirt
   module FFI
     module Stream
+      # https://libvirt.org/html/libvirt-libvirt-stream.html
+
       extend ::FFI::Library
       extend Helpers
       ffi_lib Util.library_path

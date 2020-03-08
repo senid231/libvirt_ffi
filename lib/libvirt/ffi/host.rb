@@ -2,7 +2,9 @@
 
 module Libvirt
   module FFI
-    module Connection
+    module Host
+      # https://libvirt.org/html/libvirt-libvirt-host.html
+
       extend ::FFI::Library
       extend Helpers
       ffi_lib Util.library_path
@@ -13,7 +15,8 @@ module Libvirt
       #   unsigned long 	memory - memory size in kilobytes
       #   unsigned int 	cpus - the number of active CPUs
       #   unsigned int 	mhz - expected CPU frequency, 0 if not known or on unusual architectures
-      #   unsigned int 	nodes - the number of NUMA cell, 1 for unusual NUMA topologies or uniform memory access; check capabilities XML for the actual NUMA topology
+      #   unsigned int 	nodes - the number of NUMA cell, 1 for unusual NUMA topologies or uniform memory access;
+      #     check capabilities XML for the actual NUMA topology
       #   unsigned int 	sockets - number of CPU sockets per node if nodes > 1, 1 in case of unusual NUMA topology
       #   unsigned int 	cores - number of cores per socket, total number of processors in case of unusual NUMA topolog
       #   unsigned int 	threads - number of threads per core, 1 in case of unusual numa topology
@@ -21,24 +24,24 @@ module Libvirt
       class NodeInfoStruct < ::FFI::Struct
         layout :model, [:char, 32],
                :memory, :ulong,
-               :cpus, :ulong,
-               :mhz, :ulong,
-               :nodes, :ulong,
-               :sockets, :ulong,
-               :cores, :ulong,
-               :threads, :ulong
+               :cpus, :uint,
+               :mhz, :uint,
+               :nodes, :uint,
+               :sockets, :uint,
+               :cores, :uint,
+               :threads, :uint
       end
 
-      class NodeInfo
-        def initialize(node_info_ptr, node_info_struct)
-          @node_info_ptr = node_info_ptr
-          @node_info_struct = node_info_struct
-        end
+      # int	virGetVersion	(
+      #   unsigned long *libVer,
+      #   const char *type,
+      #   unsigned long *typeVer
+      # )
+      attach_function :virGetVersion, [:pointer, :string, :pointer], :int
 
-        def [](attr)
-          @node_info_struct[attr]
-        end
-      end
+      # int	virNodeGetInfo			(virConnectPtr conn,
+      # 					 virNodeInfoPtr info)
+      attach_function :virNodeGetInfo, [:pointer, :pointer], :int
 
       # typedef void	(*virConnectCloseFunc) (
       #   virConnectPtr conn,

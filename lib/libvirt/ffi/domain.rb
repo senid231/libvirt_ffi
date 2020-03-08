@@ -3,6 +3,8 @@
 module Libvirt
   module FFI
     module Domain
+      # https://libvirt.org/html/libvirt-libvirt-domain.html
+
       extend ::FFI::Library
       extend Helpers
       ffi_lib Util.library_path

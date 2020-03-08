@@ -4,7 +4,7 @@ module Libvirt
   class NodeInfo
     def initialize(node_info_ptr)
       @node_info_ptr = node_info_ptr
-      @node_info_struct = FFI::NodeInfo::Struct.new(node_info_ptr)
+      @node_info_struct = FFI::Host::NodeInfoStruct.new(node_info_ptr)
     end
 
     def [](attr)

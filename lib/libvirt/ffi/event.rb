@@ -3,6 +3,8 @@
 module Libvirt
   module FFI
     module Event
+      # https://libvirt.org/html/libvirt-libvirt-event.html
+
       extend ::FFI::Library
       extend Helpers
       ffi_lib Util.library_path
