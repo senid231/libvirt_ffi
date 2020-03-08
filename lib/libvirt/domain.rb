@@ -5,7 +5,7 @@ module Libvirt
 
     def self.load_ref(dom_ptr)
       ref_result = FFI::Domain.virDomainRef(dom_ptr)
-      raise Error, "Couldn't retrieve domain reference" if ref_result < 0
+      raise Errors::LibError, "Couldn't retrieve domain reference" if ref_result < 0
       new(dom_ptr)
     end
 
@@ -25,7 +25,7 @@ module Libvirt
       state = ::FFI::MemoryPointer.new(:int)
       reason = ::FFI::MemoryPointer.new(:int)
       result = FFI::Domain.virDomainGetState(@dom_ptr, state, reason, 0)
-      raise Error, "Couldn't get domain state" if result < 0
+      raise Errors::LibError, "Couldn't get domain state" if result < 0
       state_sym = FFI::Domain.enum_type(:state)[state.read_int]
       reason_sym = FFI::Domain.state_reason(state_sym, reason.read_int)
       [state_sym, reason_sym]
@@ -38,7 +38,7 @@ module Libvirt
     def uuid
       buff = ::FFI::MemoryPointer.new(:char, FFI::Domain::UUID_STRING_BUFLEN)
       result = FFI::Domain.virDomainGetUUIDString(@dom_ptr, buff)
-      raise Error, "Couldn't get domain uuid" if result < 0
+      raise Errors::LibError, "Couldn't get domain uuid" if result < 0
       buff.read_string
     end
 
@@ -74,57 +74,57 @@ module Libvirt
       dbg { "#screenshot stream=#{stream}, display=#{display}," }
 
       mime_type, pointer = FFI::Domain.virDomainScreenshot(@dom_ptr, stream.to_ptr, display, 0)
-      raise Error, "Couldn't attach domain screenshot" if pointer.null?
+      raise Errors::LibError, "Couldn't attach domain screenshot" if pointer.null?
       # free pointer required
       mime_type
     end
 
     def free_domain
       result = FFI::Domain.virDomainFree(@dom_ptr)
-      raise Error, "Couldn't free domain" if result < 0
+      raise Errors::LibError, "Couldn't free domain" if result < 0
       @dom_ptr = nil
     end
 
     def start(flags = 0)
       result = FFI::Domain.virDomainCreateWithFlags(@dom_ptr, flags)
-      raise Error, "Couldn't start domain" if result < 0
+      raise Errors::LibError, "Couldn't start domain" if result < 0
     end
 
     def reboot(flags = 0)
       result = FFI::Domain.virDomainReboot(@dom_ptr, flags)
-      raise Error, "Couldn't reboot domain" if result < 0
+      raise Errors::LibError, "Couldn't reboot domain" if result < 0
     end
 
     def shutdown(flags = :ACPI_POWER_BTN)
       result = FFI::Domain.virDomainShutdownFlags(@dom_ptr, flags)
-      raise Error, "Couldn't shutdown domain" if result < 0
+      raise Errors::LibError, "Couldn't shutdown domain" if result < 0
     end
 
     def power_off(flags = 0)
       result = FFI::Domain.virDomainDestroyFlags(@dom_ptr, flags)
-      raise Error, "Couldn't power off domain" if result < 0
+      raise Errors::LibError, "Couldn't power off domain" if result < 0
     end
 
     def reset(flags = 0)
       result = FFI::Domain.virDomainReset(@dom_ptr, flags)
-      raise Error, "Couldn't reset domain" if result < 0
+      raise Errors::LibError, "Couldn't reset domain" if result < 0
     end
 
     def suspend
       result = FFI::Domain.virDomainSuspend(@dom_ptr)
-      raise Error, "Couldn't suspend domain" if result < 0
+      raise Errors::LibError, "Couldn't suspend domain" if result < 0
     end
 
     def resume
       result = FFI::Domain.virDomainResume(@dom_ptr)
-      raise Error, "Couldn't resume domain" if result < 0
+      raise Errors::LibError, "Couldn't resume domain" if result < 0
     end
 
     # After save_memory(:PAUSED) you need to call #start and #resume
     # to move domain to the running state.
     def save_memory(flags = :PAUSED)
       result = FFI::Domain.virDomainManagedSave(@dom_ptr, flags)
-      raise Error, "Couldn't save domain memory" if result < 0
+      raise Errors::LibError, "Couldn't save domain memory" if result < 0
     end
 
     private

@@ -18,7 +18,7 @@ module Libvirt
 
     def self.load_ref(conn_ptr)
       ref_result = FFI::Host.virConnectRef(conn_ptr)
-      raise Error, "Couldn't retrieve connection reference" if ref_result < 0
+      raise Errors::LibError, "Couldn't retrieve connection reference" if ref_result < 0
       new(nil).tap { |r| r.send(:set_connection, conn_ptr) }
     end
 
@@ -38,13 +38,13 @@ module Libvirt
 
     def open
       @conn_ptr = FFI::Host.virConnectOpen(@uri)
-      raise Error, "Couldn't open connection to #{@uri.inspect}" if @conn_ptr.null?
+      raise Errors::LibError, "Couldn't open connection to #{@uri.inspect}" if @conn_ptr.null?
       true
     end
 
     def close
       result = FFI::Host.virConnectClose(@conn_ptr)
-      raise Error, "Couldn't close connection to #{@uri.inspect}" if result < 0
+      raise Errors::LibError, "Couldn't close connection to #{@uri.inspect}" if result < 0
       @conn_ptr = ::FFI::Pointer.new(0)
       true
     end
@@ -62,14 +62,14 @@ module Libvirt
 
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
       result = FFI::Host.virConnectGetVersion(@conn_ptr, version_ptr)
-      raise Error, "Couldn't retrieve connection version" if result < 0
+      raise Errors::LibError, "Couldn't retrieve connection version" if result < 0
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util::parse_version(version_number)
     end
 
     def set_keep_alive(interval, count)
       result = FFI::Host.virConnectSetKeepAlive(@conn_ptr, interval, count)
-      raise Error, "Couldn't set connection keep_alive" if result < 0
+      raise Errors::LibError, "Couldn't set connection keep_alive" if result < 0
       result == 0
     end
 
@@ -83,7 +83,7 @@ module Libvirt
 
     def list_all_domains_qty(flags = 0)
       result = FFI::Domain.virConnectListAllDomains(@conn_ptr, nil, flags)
-      raise Error, "Couldn't retrieve domains qty with flags #{flags.to_s(16)}" if result < 0
+      raise Errors::LibError, "Couldn't retrieve domains qty with flags #{flags.to_s(16)}" if result < 0
       result
     end
 
@@ -91,7 +91,7 @@ module Libvirt
       size = list_all_domains_qty(flags)
       domains_ptr = ::FFI::MemoryPointer.new(:pointer, size)
       result = FFI::Domain.virConnectListAllDomains(@conn_ptr, domains_ptr, flags)
-      raise Error, "Couldn't retrieve domains list with flags #{flags.to_s(16)}" if result < 0
+      raise Errors::LibError, "Couldn't retrieve domains list with flags #{flags.to_s(16)}" if result < 0
       ptr = domains_ptr.read_pointer
       ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr) }
     end
@@ -132,7 +132,7 @@ module Libvirt
       )
       if result < 0
         cb_data.pointer.free
-        raise Error, "Couldn't register domain event callback"
+        raise Errors::LibError, "Couldn't register domain event callback"
       end
 
       STORAGE.store_struct(
@@ -149,7 +149,7 @@ module Libvirt
       dbg { "#deregister_domain_event_callback callback_id=#{callback_id}" }
 
       result = FFI::Domain.virConnectDomainEventDeregisterAny(@conn_ptr, callback_id)
-      raise Error, "Couldn't deregister domain event callback" if result < 0
+      raise Errors::LibError, "Couldn't deregister domain event callback" if result < 0
 
       # virConnectDomainEventDeregisterAny will call free func
       # So we don't need to remove object from STORAGE here.
@@ -159,7 +159,7 @@ module Libvirt
     def lib_version
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
       result = FFI::Host.virConnectGetLibVersion(@conn_ptr, version_ptr)
-      raise Error, "Couldn't get connection lib version" if result < 0
+      raise Errors::LibError, "Couldn't get connection lib version" if result < 0
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util.parse_version(version_number)
     end
@@ -180,13 +180,13 @@ module Libvirt
     def node_info
       node_info_ptr = ::FFI::MemoryPointer.new(FFI::Host::NodeInfoStruct.by_value)
       result = FFI::Host.virNodeGetInfo(@conn_ptr, node_info_ptr)
-      raise Error, "Couldn't get connection node info" if result < 0
+      raise Errors::LibError, "Couldn't get connection node info" if result < 0
       NodeInfo.new(node_info_ptr)
     end
 
     def stream(flags = 0)
       pointer = FFI::Stream.virStreamNew(@conn_ptr, flags)
-      raise Error, "Couldn't create stream" if pointer.null?
+      raise Errors::LibError, "Couldn't create stream" if pointer.null?
       Stream.new(pointer)
     end
 
@@ -197,7 +197,7 @@ module Libvirt
     end
 
     def check_open!
-      raise Error, "Connection to #{@uri.inspect} is not open" if @conn_ptr.null?
+      raise Errors::LibError, "Connection to #{@uri.inspect} is not open" if @conn_ptr.null?
     end
 
     def dbg(&block)

@@ -39,7 +39,7 @@ class ScreenshotOpaque
     next unless (Libvirt::Stream::EVENT_READABLE & ev) != 0
     begin
       code, data = s.recv(1024)
-    rescue Libvirt::Error => e
+    rescue Libvirt::Errors::LibError => e
       op.on_libvirt_error(s, e)
       next
     end
@@ -97,7 +97,7 @@ class ScreenshotOpaque
       print_usage "Opaque#finish_stream stream.finish #{@filepath}"
       stream.finish
       [true, nil]
-    rescue Libvirt::Error => e
+    rescue Libvirt::Errors::LibError => e
       STDERR.puts "Opaque#finish_stream stream.finish exception rescued #{e.class} #{e.message}"
       [false, e.message]
     end

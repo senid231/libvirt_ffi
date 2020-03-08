@@ -121,8 +121,8 @@ Async do
     puts 'DOM starting...'
     d.start
     puts 'DOM started'
-  rescue Libvirt::Error => e
-    STDERR.puts "error starting: #{e.message}"
+  rescue Libvirt::Errors::LibError => e
+    STDERR.puts "error starting\n#{e.class}\n#{e.message}", e.error_data
   end
 
   ASYNC_REACTOR.sleep 5

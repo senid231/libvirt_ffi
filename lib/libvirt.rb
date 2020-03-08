@@ -4,7 +4,7 @@ require 'ffi'
 require 'objspace'
 require 'libvirt/domain_callback_storage'
 require 'libvirt/util'
-require 'libvirt/error'
+require 'libvirt/errors'
 require 'libvirt/ffi'
 require 'libvirt/event'
 require 'libvirt/connection'
@@ -23,7 +23,7 @@ module Libvirt
     def lib_version
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
       code = FFI::Host.virGetVersion(version_ptr, nil, nil)
-      raise Error, 'failed to get version' if code < 0
+      raise Errors::LibError, 'failed to get version' if code < 0
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util.parse_version(version_number)
     end

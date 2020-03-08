@@ -36,7 +36,7 @@ module Libvirt
     def event_add_callback(events, opaque, &block)
       dbg { "#event_add_callback events=#{events}, opaque=#{opaque}" }
 
-      raise Error, 'callback already added' unless @cb.nil?
+      raise Errors::LibError, 'callback already added' unless @cb.nil?
 
       @opaque = opaque
       @cb = FFI::Stream.callback_function(:virStreamEventCallback) do |_stream_ptr, evs, _op|
@@ -45,7 +45,7 @@ module Libvirt
       end
 
       result = FFI::Stream.virStreamEventAddCallback(@stream_ptr, events, @cb, nil, nil)
-      raise Error, "Couldn't add stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't add stream event callback" if result < 0
 
       true
     end
@@ -55,7 +55,7 @@ module Libvirt
       dbg { "#event_update_callback events=#{events}" }
 
       result = FFI::Stream.virStreamEventUpdateCallback(@stream_ptr, events)
-      raise Error, "Couldn't remove stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't remove stream event callback" if result < 0
       true
     end
 
@@ -63,7 +63,7 @@ module Libvirt
       dbg { '#event_remove_callback' }
 
       result = FFI::Stream.virStreamEventRemoveCallback(@stream_ptr)
-      raise Error, "Couldn't remove stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't remove stream event callback" if result < 0
       opaque = @opaque
       @cb = nil
       @opaque = nil
@@ -72,21 +72,21 @@ module Libvirt
 
     def finish
       result = FFI::Stream.virStreamFinish(@stream_ptr)
-      raise Error, "Couldn't remove stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't remove stream event callback" if result < 0
       @cb = nil
       @opaque = nil
     end
 
     def abort_stream
       result = FFI::Stream.virStreamAbort(@stream_ptr)
-      raise Error, "Couldn't remove stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't remove stream event callback" if result < 0
       @cb = nil
       @opaque = nil
     end
 
     def free_stream
       result = FFI::Stream.virStreamFree(@stream_ptr)
-      raise Error, "Couldn't free stream event callback" if result < 0
+      raise Errors::LibError, "Couldn't free stream event callback" if result < 0
       @cb = nil
       @opaque = nil
       @stream_ptr = nil
@@ -105,7 +105,7 @@ module Libvirt
       elsif result > 0
         [result, buffer.read_bytes(result)]
       else
-        raise Error, "Invalid response from virStreamRecv #{result.inspect}"
+        raise Errors::LibError, "Invalid response from virStreamRecv #{result.inspect}"
       end
     end
 
