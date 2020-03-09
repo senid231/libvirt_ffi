@@ -266,6 +266,11 @@ module Libvirt
             :CHECKPOINTS_METADATA, 0x10 # If last use of domain, then also remove any checkpoint metadata Future undefine control flags should come here.
       ]
 
+      # enum virDomainDefineFlags
+      enum :define_flags, [
+          :DEFINE_VALIDATE, 0x1 # Validate the XML document against schema
+        ]
+
       # int	virDomainFree	(
       #   virDomainPtr domain
       # )
@@ -741,6 +746,13 @@ module Libvirt
       #   unsigned int flags
       # )
       attach_function :virDomainUndefineFlags, [:pointer, :uint], :int
+
+      # virDomainPtr virDomainDefineXMLFlags (
+      #   virConnectPtr conn,
+      # 	const char * xml,
+      # 	unsigned int flags
+      # )
+      attach_function :virDomainDefineXMLFlags, [:pointer, :string, :uint], :pointer
 
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)

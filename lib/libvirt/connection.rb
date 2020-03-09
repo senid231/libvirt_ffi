@@ -190,6 +190,13 @@ module Libvirt
       Stream.new(pointer)
     end
 
+    def define_domain(xml, options_or_flags = nil)
+      flags = Libvirt::Util.parse_flags options_or_flags, FFI::Domain.enum_type(:define_flags)
+      pointer = FFI::Domain.virDomainDefineXMLFlags(@conn_ptr, xml, flags)
+      raise Errors::LibError, "Couldn't define domain" if pointer.null?
+      Domain.new(pointer)
+    end
+
     private
 
     def set_connection(conn_ptr)
