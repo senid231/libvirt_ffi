@@ -8,6 +8,8 @@ gemspec
 gem 'rake', '~> 12.0'
 gem 'minitest', '~> 5.0'
 
+gem 'nokogiri'
+
 group :development do
   gem 'async', '~> 1.24'
   gem 'activesupport'

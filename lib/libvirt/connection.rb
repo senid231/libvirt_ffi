@@ -89,11 +89,33 @@ module Libvirt
 
     def list_all_domains(flags = 0)
       size = list_all_domains_qty(flags)
+      return [] if size == 0
+
       domains_ptr = ::FFI::MemoryPointer.new(:pointer, size)
       result = FFI::Domain.virConnectListAllDomains(@conn_ptr, domains_ptr, flags)
       raise Errors::LibError, "Couldn't retrieve domains list with flags #{flags.to_s(16)}" if result < 0
       ptr = domains_ptr.read_pointer
       ptr.get_array_of_pointer(0, size).map { |dom_ptr| Libvirt::Domain.new(dom_ptr) }
+    end
+
+    def list_all_storage_pools_qty(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Storage.enum_type(:list_all_pools_flags)
+      result = FFI::Storage.virConnectListAllStoragePools(@conn_ptr, nil, flags)
+      raise Errors::LibError, "Couldn't retrieve storage pools qty with flags #{flags.to_s(16)}" if result < 0
+      result
+    end
+
+    def list_all_storage_pools(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Storage.enum_type(:list_all_pools_flags)
+      size = list_all_storage_pools_qty(flags)
+      return [] if size == 0
+
+      storage_pools_ptr = ::FFI::MemoryPointer.new(:pointer, size)
+      result = FFI::Storage.virConnectListAllStoragePools(@conn_ptr, storage_pools_ptr, flags)
+      raise Errors::LibError, "Couldn't retrieve storage pools list with flags #{flags.to_s(16)}" if result < 0
+
+      ptr = storage_pools_ptr.read_pointer
+      ptr.get_array_of_pointer(0, size).map { |stp_ptr| StoragePool.new(stp_ptr) }
     end
 
     def register_close_callback(opaque = nil, &block)

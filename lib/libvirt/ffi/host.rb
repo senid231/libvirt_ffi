@@ -10,7 +10,6 @@ module Libvirt
       ffi_lib Util.library_path
 
       # struct virNodeInfo {
-      #
       #   char model[32] 	model - string indicating the CPU model
       #   unsigned long 	memory - memory size in kilobytes
       #   unsigned int 	cpus - the number of active CPUs
@@ -39,8 +38,10 @@ module Libvirt
       # )
       attach_function :virGetVersion, [:pointer, :string, :pointer], :int
 
-      # int	virNodeGetInfo			(virConnectPtr conn,
-      # 					 virNodeInfoPtr info)
+      # int	virNodeGetInfo (
+      #   virConnectPtr conn,
+      # 	virNodeInfoPtr info
+      # )
       attach_function :virNodeGetInfo, [:pointer, :pointer], :int
 
       # typedef void	(*virConnectCloseFunc) (

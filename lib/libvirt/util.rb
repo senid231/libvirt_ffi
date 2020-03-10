@@ -2,6 +2,23 @@
 
 module Libvirt
   module Util
+    UNIT_TO_BYTES = {
+        b: 1,
+        bytes: 1,
+        KB: 1_000,
+        KiB: 1_024,
+        k: 1_024,
+        MB: 1_000_000,
+        M: 1_048_576,
+        MiB: 1_048_576,
+        GB: 1_000_000_000,
+        G: 1_073_741_824,
+        GiB: 1_073_741_824,
+        TB: 1_000_000_000_000,
+        T: 1_099_511_627_776,
+        TiB: 1_099_511_627_776
+    }.freeze
+
     class << self
 
       def logger=(logger)
@@ -72,6 +89,15 @@ module Libvirt
         end
 
         result
+      end
+
+      # @param value [Integer,String]
+      # @param unit [String,Symbol] default 'bytes'
+      # @return [Integer] memory in bytes
+      def parse_memory(value, unit)
+        unit ||= 'bytes'
+        multiplier = UNIT_TO_BYTES.fetch(unit.to_sym)
+        Integer(value) * multiplier
       end
 
     end

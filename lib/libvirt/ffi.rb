@@ -12,5 +12,6 @@ module Libvirt
     require 'libvirt/ffi/domain'
     require 'libvirt/ffi/event'
     require 'libvirt/ffi/stream'
+    require 'libvirt/ffi/storage'
   end
 end
