@@ -9,26 +9,26 @@ module Libvirt
       extend Helpers
       ffi_lib Util.library_path
 
-      # typedef void (*virEventHandleCallback)	(
+      # typedef void (*virEventHandleCallback)  (
       #   int watch,
-      # 	int fd,
-      # 	int events,
-      # 	void * opaque
+      #   int fd,
+      #   int events,
+      #   void * opaque
       # )
       EVENT_HANDLE_CALLBACK = callback :virEventHandleCallback, [:int, :int, :int, :pointer], :void
 
-      # typedef void (*virEventTimeoutCallback)	(
+      # typedef void (*virEventTimeoutCallback)  (
       #   int timer,
-      # 	void * opaque
+      #   void * opaque
       # )
       EVENT_TIMEOUT_CALLBACK = callback :virEventTimeoutCallback, [:int, :pointer], :void
 
-      # typedef int	(*virEventAddHandleFunc) (
+      # typedef int  (*virEventAddHandleFunc) (
       #   int fd,
-      # 	int event,
-      # 	virEventHandleCallback cb,
-      # 	void * opaque,
-      # 	virFreeCallback ff
+      #   int event,
+      #   virEventHandleCallback cb,
+      #   void * opaque,
+      #   virFreeCallback ff
       # )
       callback :virEventAddHandleFunc, [
           :int,
@@ -38,22 +38,22 @@ module Libvirt
           FFI::Common::FREE_CALLBACK
       ], :int
 
-      # typedef void	(*virEventUpdateHandleFunc)	(
+      # typedef void  (*virEventUpdateHandleFunc)  (
       #   int watch,
-      # 	int event
+      #   int event
       # )
       callback :virEventUpdateHandleFunc, [:int, :int], :void
 
-      # typedef int	(*virEventRemoveHandleFunc)	(
+      # typedef int  (*virEventRemoveHandleFunc)  (
       #   int watch
       # )
       callback :virEventRemoveHandleFunc, [:int], :int
 
-      # typedef int	(*virEventAddTimeoutFunc)	(
+      # typedef int  (*virEventAddTimeoutFunc)  (
       #   int timeout,
-      # 	virEventTimeoutCallback cb,
-      # 	void * opaque,
-      # 	virFreeCallback ff
+      #   virEventTimeoutCallback cb,
+      #   void * opaque,
+      #   virFreeCallback ff
       # )
       callback :virEventAddTimeoutFunc, [
           :int,
@@ -62,24 +62,24 @@ module Libvirt
           FFI::Common::FREE_CALLBACK
       ], :int
 
-      # typedef void (*virEventUpdateTimeoutFunc)	(
+      # typedef void (*virEventUpdateTimeoutFunc)  (
       #   int timer,
-      # 	int timeout
+      #   int timeout
       # )
       callback :virEventUpdateTimeoutFunc, [:int, :int], :void
 
-      # typedef int	(*virEventRemoveTimeoutFunc)	(
+      # typedef int  (*virEventRemoveTimeoutFunc)  (
       #   int timer
       # )
       callback :virEventRemoveTimeoutFunc, [:int], :int
 
-      # void	virEventRegisterImpl (
+      # void  virEventRegisterImpl (
       #   virEventAddHandleFunc addHandle,
-      # 	virEventUpdateHandleFunc updateHandle,
-      # 	virEventRemoveHandleFunc removeHandle,
-      # 	virEventAddTimeoutFunc addTimeout,
-      # 	virEventUpdateTimeoutFunc updateTimeout,
-      # 	virEventRemoveTimeoutFunc removeTimeout
+      #   virEventUpdateHandleFunc updateHandle,
+      #   virEventRemoveHandleFunc removeHandle,
+      #   virEventAddTimeoutFunc addTimeout,
+      #   virEventUpdateTimeoutFunc updateTimeout,
+      #   virEventRemoveTimeoutFunc removeTimeout
       # )
       attach_function :virEventRegisterImpl, [
           :virEventAddHandleFunc,
@@ -89,7 +89,6 @@ module Libvirt
           :virEventUpdateTimeoutFunc,
           :virEventRemoveTimeoutFunc
       ], :void
-
     end
   end
 end

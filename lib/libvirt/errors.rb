@@ -46,9 +46,18 @@ module Libvirt
         if error_data.nil?
           client_message
         elsif client_message.nil?
-          '%s: %s (%s) %s' % [error_level, error_code, error_domain, error_message]
+          format '%<level>s: %<code>s (%<domain>s) %<message>s',
+                 level: error_level,
+                 code: error_code,
+                 domain: error_domain,
+                 message: error_message
         else
-          "%s\n%s: %s (%s) %s" % [client_message, error_level, error_code, error_domain, error_message]
+          format "%<client_message>s\n%<level>s: %<code>s (%<domain>s) %<message>s",
+                 client_message: client_message,
+                 level: error_level,
+                 code: error_code,
+                 domain: error_domain,
+                 message: error_message
         end
       end
     end

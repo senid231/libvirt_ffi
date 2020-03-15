@@ -2,7 +2,6 @@
 
 module Libvirt
   class DomainCallbackStorage
-
     class CallbackDataStruct < ::FFI::Struct
       layout :connection_pointer, :pointer,
              :callback_id, :int
@@ -16,19 +15,19 @@ module Libvirt
     #   cb_data [Libvirt::DomainCallbackStorage::CallbackDataStruct],
     #   cb_data_free_func [FFI::Function]
     def allocate_struct
-      dbg { "#allocate_struct" }
+      dbg { '#allocate_struct' }
 
       cb_data_ptr = ::FFI::MemoryPointer.new(:char, CallbackDataStruct.size, false)
       cb_data = CallbackDataStruct.new(cb_data_ptr)
       cb_data_free_func = FFI::Common.free_function do |pointer|
-        dbg { "Libvirt::DomainCallbackStorage cb_data_free_func triggered" }
+        dbg { 'Libvirt::DomainCallbackStorage cb_data_free_func triggered' }
         remove_struct(pointer)
       end
       [cb_data, cb_data_free_func]
     end
 
     def store_struct(cb_data, connection_pointer:, callback_id:, cb:, opaque:)
-      dbg { "#store_struct" }
+      dbg { '#store_struct' }
 
       cb_data[:connection_pointer] = connection_pointer
       cb_data[:callback_id] = callback_id

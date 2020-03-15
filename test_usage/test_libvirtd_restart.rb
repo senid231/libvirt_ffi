@@ -17,7 +17,7 @@ GC::Tracer.start_logging(
     gc_stat: false,
     gc_latest_gc_info: false,
     rusage: false,
-    events: %i[end_mark end_sweep]
+    events: [:end_mark, :end_sweep]
 )
 
 Libvirt.logger = Logger.new(STDOUT, formatter: LogFormatter.new)
@@ -26,7 +26,7 @@ Libvirt.logger.level = ENV['DEBUG'] ? :debug : :info
 IMPL = LibvirtAsync::Implementations.new
 OBJECTS = {
     hv: nil
-}
+}.freeze
 
 def async_task(run, parent = nil, &block)
   task = LibvirtAsync::Util.create_task(parent, ASYNC_REACTOR, &block)

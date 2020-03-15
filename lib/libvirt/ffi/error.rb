@@ -9,7 +9,6 @@ module Libvirt
       extend Helpers
       ffi_lib Util.library_path
 
-
       # enum virErrorDomain
       enum :error_domain, [
           :NONE, 0x0, # None
@@ -92,7 +91,6 @@ module Libvirt
           :WARNING, 0x1, # A simple warning
           :ERROR, 0x2 # An error
       ]
-
 
       # enum virErrorNumber
       enum :error_number, [
@@ -208,18 +206,18 @@ module Libvirt
       ]
 
       # struct virError {
-      #   int 	code # The error code, a virErrorNumber
-      #   int 	domain #   What part of the library raised this error
-      #   char * 	message #   human-readable informative error message
-      #   virErrorLevel 	level #   how consequent is the error
-      #   virConnectPtr 	conn #   connection if available, deprecated see note above
-      #   virDomainPtr 	dom #   domain if available, deprecated see note above
-      #   char * 	str1 #   extra string information
-      #   char * 	str2 #   extra string information
-      #   char * 	str3 #   extra string information
-      #   int 	int1 #   extra number information
-      #   int 	int2 #   extra number information
-      #   virNetworkPtr 	net #   network if available, deprecated see note above
+      #   int   code # The error code, a virErrorNumber
+      #   int   domain #   What part of the library raised this error
+      #   char *   message #   human-readable informative error message
+      #   virErrorLevel   level #   how consequent is the error
+      #   virConnectPtr   conn #   connection if available, deprecated see note above
+      #   virDomainPtr   dom #   domain if available, deprecated see note above
+      #   char *   str1 #   extra string information
+      #   char *   str2 #   extra string information
+      #   char *   str3 #   extra string information
+      #   int   int1 #   extra number information
+      #   int   int2 #   extra number information
+      #   virNetworkPtr   net #   network if available, deprecated see note above
       # }
       class Struct < ::FFI::Struct
         layout :code, FFI::Error.enum_type(:error_number),
@@ -236,11 +234,10 @@ module Libvirt
                :net, :pointer
       end
 
-      # virErrorPtr	virGetLastError (
+      # virErrorPtr  virGetLastError (
       #   void
       # )
       attach_function :virGetLastError, [], :pointer
-
     end
   end
 end

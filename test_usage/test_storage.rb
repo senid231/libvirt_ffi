@@ -49,5 +49,4 @@ Async do
       puts "Storage pool #{i} volume #{j} xml", Libvirt::Xml::StorageVolume.load(vol.xml_desc).to_h
     end
   end
-
 end

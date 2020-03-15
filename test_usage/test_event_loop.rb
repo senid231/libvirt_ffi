@@ -17,7 +17,7 @@ GC::Tracer.start_logging(
     gc_stat: false,
     gc_latest_gc_info: false,
     rusage: false,
-    events: %i[end_mark end_sweep]
+    events: [:end_mark, :end_sweep]
 )
 
 Libvirt.logger = Logger.new(STDOUT, formatter: LogFormatter.new)
@@ -28,7 +28,7 @@ OBJECTS = {
     hv: nil,
     domains: [],
     cb_ids: []
-}
+}.freeze
 
 Async do
   ASYNC_REACTOR = Async::Task.current.reactor
@@ -41,7 +41,7 @@ Async do
   OBJECTS[:hv] = Libvirt::Connection.new('qemu+tcp://localhost:16510/system')
   OBJECTS[:hv].open
   res = OBJECTS[:hv].set_keep_alive(2, 1)
-  Libvirt.logger.info {  "set_keep_alive #{res}" }
+  Libvirt.logger.info { "set_keep_alive #{res}" }
 
   puts "Connection version #{OBJECTS[:hv].version.inspect}"
   puts "Connection lib_version #{OBJECTS[:hv].lib_version.inspect}"
@@ -182,5 +182,4 @@ Async do
   # ASYNC_REACTOR.sleep 5
   # d.start
   # puts 'DOM start'
-
 end

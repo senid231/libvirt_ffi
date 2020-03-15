@@ -21,7 +21,7 @@ module Libvirt
 
     attr_accessor :debug
 
-    Opaque = Struct.new(:cb, :opaque, :ff)
+    Opaque = Struct.new(:cb, :opaque, :free_func)
 
     def invoke_handle_callback(watch, fd, events, opaque)
       cb = opaque.cb
@@ -63,7 +63,7 @@ module Libvirt
       @schedule.call(&block)
     end
 
-    def register(add_handle:, update_handle:, remove_handle:, add_timer:, update_timer:, remove_timer:, schedule:)
+    def register(add_handle:, update_handle:, remove_handle:, add_timer:, update_timer:, remove_timer:, schedule:) # rubocop:disable Metrics/ParameterLists
       @add_handle = add_handle
       @update_handle = update_handle
       @remove_handle = remove_handle
@@ -92,9 +92,9 @@ module Libvirt
 
     private
 
-    def _add_handle(fd, event, cb, opaque, ff)
-      dbg { "ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
-      op = Opaque.new(cb, opaque, ff)
+    def _add_handle(fd, event, cb, opaque, free_func)
+      dbg { "ADD_HANDLE fd=#{fd}, #{event}=event, cb=#{cb}, opaque=#{opaque}, free_func=#{free_func}" }
+      op = Opaque.new(cb, opaque, free_func)
       @add_handle.call(fd, event, op)
     end
 
@@ -106,7 +106,7 @@ module Libvirt
     def _remove_handle(watch)
       dbg { "REMOVE_HANDLE watch=#{watch}" }
       op = @remove_handle.call(watch)
-      free_func = op.ff
+      free_func = op.free_func
       opaque = op.opaque
       schedule_operation do
         dbg { "REMOVE_HANDLE delayed free_func watch=#{watch}" }
@@ -115,9 +115,9 @@ module Libvirt
       0
     end
 
-    def _add_timer(timeout, cb, opaque, ff)
-      dbg { "ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, ff=#{ff}" }
-      op = Opaque.new(cb, opaque, ff)
+    def _add_timer(timeout, cb, opaque, free_func)
+      dbg { "ADD_TIMER timeout=#{timeout}, cb=#{cb}, opaque=#{opaque}, free_func=#{free_func}" }
+      op = Opaque.new(cb, opaque, free_func)
       @add_timer.call(timeout, op)
     end
 
@@ -129,7 +129,7 @@ module Libvirt
     def _remove_timer(timer)
       dbg { "REMOVE_TIMER timer=#{timer}" }
       op = @remove_timer.call(timer)
-      free_func = op.ff
+      free_func = op.free_func
       opaque = op.opaque
       schedule_operation do
         dbg { "REMOVE_TIMER async free_func timer=#{timer}" }
@@ -141,6 +141,5 @@ module Libvirt
     def dbg(&block)
       Util.log(:debug, 'Libvirt::Event', &block)
     end
-
   end
 end

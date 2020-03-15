@@ -99,7 +99,6 @@ module Libvirt
         type = opts[:type] || :text
         meth = "parse_node_#{type}"
 
-
         if opts[:apply]
           opts[:apply].call(@xml_node, opts)
         elsif respond_to?(meth, true)
@@ -118,6 +117,7 @@ module Libvirt
 
         cast = opts[:cast]
         return value if cast.nil?
+
         meth = "decode_#{cast}"
 
         if opts[:array]
@@ -169,12 +169,11 @@ module Libvirt
       def parse_node_text(name, opts)
         nodes = find_nodes(name, opts)
 
-        if opts[:array]
-          nodes.map(&:text)
-        end
+        nodes.map(&:text) if opts[:array]
 
         node = nodes.first
         return if node.nil?
+
         node.text
       end
 
@@ -182,12 +181,11 @@ module Libvirt
         nodes = find_nodes name, { path: :root }.merge(opts)
         value_name = opts[:name]&.to_sym || name
 
-        if opts[:array]
-          nodes.map { |node| node[value_name.to_s] }
-        end
+        nodes.map { |node| node[value_name.to_s] } if opts[:array]
 
         node = nodes.first
         return if node.nil?
+
         node[value_name.to_s]
       end
 
@@ -197,24 +195,22 @@ module Libvirt
 
         nodes = find_nodes(name, opts)
 
-        if opts[:array]
-          nodes.map { |node| klass.new(node) }
-        end
+        nodes.map { |node| klass.new(node) } if opts[:array]
 
         node = nodes.first
         return if node.nil?
+
         klass.new(node)
       end
 
       def parse_node_raw(name, opts)
         nodes = find_nodes(name, opts)
 
-        if opts[:array]
-          nodes.map { |node| node.to_xml }
-        end
+        nodes.map(&:to_xml) if opts[:array]
 
         node = nodes.first
         return if node.nil?
+
         node.to_xml
       end
 
@@ -229,6 +225,7 @@ module Libvirt
 
         node = nodes.first
         return if node.nil?
+
         Util.parse_memory node.text, node['unit']
       end
 
@@ -249,9 +246,9 @@ module Libvirt
       def serialize_for_hash(value)
         return value.to_h if value.is_a?(Generic)
         return value.map { |val| serialize_for_hash(val) } if value.is_a?(Array)
+
         value
       end
-
     end
   end
 end

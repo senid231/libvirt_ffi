@@ -2,10 +2,10 @@
 
 module Libvirt
   class Domain
-
     def self.load_ref(dom_ptr)
       ref_result = FFI::Domain.virDomainRef(dom_ptr)
-      raise Errors::LibError, "Couldn't retrieve domain reference" if ref_result < 0
+      raise Errors::LibError, "Couldn't retrieve domain reference" if ref_result.negative?
+
       new(dom_ptr)
     end
 
@@ -15,8 +15,9 @@ module Libvirt
       free = ->(obj_id) do
         Util.log(:debug) { "Finalize Libvirt::Domain 0x#{obj_id.to_s(16)} @dom_ptr=#{@dom_ptr}," }
         return unless @dom_ptr
+
         fr_result = FFI::Domain.virDomainFree(@dom_ptr)
-        STDERR.puts "Couldn't free Libvirt::Domain (0x#{obj_id.to_s(16)}) pointer #{@dom_ptr.address}" if fr_result < 0
+        warn "Couldn't free Libvirt::Domain (0x#{obj_id.to_s(16)}) pointer #{@dom_ptr.address}" if fr_result.negative?
       end
       ObjectSpace.define_finalizer(self, free)
     end
@@ -25,7 +26,8 @@ module Libvirt
       state = ::FFI::MemoryPointer.new(:int)
       reason = ::FFI::MemoryPointer.new(:int)
       result = FFI::Domain.virDomainGetState(@dom_ptr, state, reason, 0)
-      raise Errors::LibError, "Couldn't get domain state" if result < 0
+      raise Errors::LibError, "Couldn't get domain state" if result.negative?
+
       state_sym = FFI::Domain.enum_type(:state)[state.read_int]
       reason_sym = FFI::Domain.state_reason(state_sym, reason.read_int)
       [state_sym, reason_sym]
@@ -38,7 +40,8 @@ module Libvirt
     def uuid
       buff = ::FFI::MemoryPointer.new(:char, FFI::Domain::UUID_STRING_BUFLEN)
       result = FFI::Domain.virDomainGetUUIDString(@dom_ptr, buff)
-      raise Errors::LibError, "Couldn't get domain uuid" if result < 0
+      raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
+
       buff.read_string
     end
 
@@ -75,49 +78,51 @@ module Libvirt
 
       mime_type, pointer = FFI::Domain.virDomainScreenshot(@dom_ptr, stream.to_ptr, display, 0)
       raise Errors::LibError, "Couldn't attach domain screenshot" if pointer.null?
+
       # free pointer required
       mime_type
     end
 
     def free_domain
       result = FFI::Domain.virDomainFree(@dom_ptr)
-      raise Errors::LibError, "Couldn't free domain" if result < 0
+      raise Errors::LibError, "Couldn't free domain" if result.negative?
+
       @dom_ptr = nil
     end
 
     def start(flags = 0)
       result = FFI::Domain.virDomainCreateWithFlags(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't start domain" if result < 0
+      raise Errors::LibError, "Couldn't start domain" if result.negative?
     end
 
     def reboot(flags = 0)
       result = FFI::Domain.virDomainReboot(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't reboot domain" if result < 0
+      raise Errors::LibError, "Couldn't reboot domain" if result.negative?
     end
 
     def shutdown(flags = :ACPI_POWER_BTN)
       result = FFI::Domain.virDomainShutdownFlags(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't shutdown domain" if result < 0
+      raise Errors::LibError, "Couldn't shutdown domain" if result.negative?
     end
 
     def power_off(flags = 0)
       result = FFI::Domain.virDomainDestroyFlags(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't power off domain" if result < 0
+      raise Errors::LibError, "Couldn't power off domain" if result.negative?
     end
 
     def reset(flags = 0)
       result = FFI::Domain.virDomainReset(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't reset domain" if result < 0
+      raise Errors::LibError, "Couldn't reset domain" if result.negative?
     end
 
     def suspend
       result = FFI::Domain.virDomainSuspend(@dom_ptr)
-      raise Errors::LibError, "Couldn't suspend domain" if result < 0
+      raise Errors::LibError, "Couldn't suspend domain" if result.negative?
     end
 
     def resume
       result = FFI::Domain.virDomainResume(@dom_ptr)
-      raise Errors::LibError, "Couldn't resume domain" if result < 0
+      raise Errors::LibError, "Couldn't resume domain" if result.negative?
     end
 
     # Undefine a domain.
@@ -130,14 +135,14 @@ module Libvirt
     def undefine(options_or_flags = nil)
       flags = Libvirt::Util.parse_flags options_or_flags, FFI::Domain.enum_type(:undefine_flags_values)
       result = FFI::Domain.virDomainUndefineFlags(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't resume domain" if result < 0
+      raise Errors::LibError, "Couldn't resume domain" if result.negative?
     end
 
     # After save_memory(:PAUSED) you need to call #start and #resume
     # to move domain to the running state.
     def save_memory(flags = :PAUSED)
       result = FFI::Domain.virDomainManagedSave(@dom_ptr, flags)
-      raise Errors::LibError, "Couldn't save domain memory" if result < 0
+      raise Errors::LibError, "Couldn't save domain memory" if result.negative?
     end
 
     private

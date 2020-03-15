@@ -24,7 +24,7 @@ module Libvirt
       attribute :timestamp_ctime, path: './timestamp/ctime'
       attribute :timestamp_mtime, path: './timestamp/mtime'
       attribute :compat
-      # todo target/encryption target/nocow target/features
+      # TODO: target/encryption target/nocow target/features
       # todo source
       # todo backingStore
     end

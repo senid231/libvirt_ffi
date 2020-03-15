@@ -9,7 +9,7 @@ module Libvirt
       extend Helpers
       ffi_lib Util.library_path
 
-      # typedef void (*virFreeCallback)	(
+      # typedef void (*virFreeCallback)  (
       #   void * opaque
       # )
       FREE_CALLBACK = callback :virFreeCallback, [:pointer], :void

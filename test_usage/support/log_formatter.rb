@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class LogFormatter
-  LOG_FORMAT = "%s, %s [%s/%s/%s] %s\n".freeze
-  DEFAULT_DATETIME_FORMAT = "%F %T.%N".freeze
+  LOG_FORMAT = "%s, %s [%s/%s/%s] %s\n"
+  DEFAULT_DATETIME_FORMAT = '%F %T.%N'
 
   attr_accessor :datetime_format
 
@@ -11,14 +11,7 @@ class LogFormatter
   end
 
   def call(severity, time, progname, message)
-    LOG_FORMAT % [
-        severity[0..0],
-        format_datetime(time),
-        "0x#{Async::Task.current?&.object_id&.to_s(16)}",
-        "0x#{Fiber.current.object_id.to_s(16)}",
-        progname,
-        format_message(message)
-    ]
+    format(LOG_FORMAT, severity[0..0], format_datetime(time), "0x#{Async::Task.current?&.object_id&.to_s(16)}", "0x#{Fiber.current.object_id.to_s(16)}", progname, format_message(message))
   end
 
   private

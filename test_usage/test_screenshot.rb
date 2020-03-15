@@ -29,21 +29,22 @@ def run_gc(msg)
 end
 
 IMPL = LibvirtAsync::Implementations.new
-CONNS = []
-DOMS = []
-STREAMS = { stream: nil }
+CONNS = [].freeze
+DOMS = [].freeze
+STREAMS = { stream: nil }.freeze
 
 class ScreenshotOpaque
   CALLBACK = proc do |s, ev, op|
-    #run_gc('ScreenshotOpaque CALLBACK start')
+    # run_gc('ScreenshotOpaque CALLBACK start')
     next unless (Libvirt::Stream::EVENT_READABLE & ev) != 0
+
     begin
       code, data = s.recv(1024)
     rescue Libvirt::Errors::LibError => e
       op.on_libvirt_error(s, e)
       next
     end
-    #run_gc('ScreenshotOpaque CALLBACK after recv')
+    # run_gc('ScreenshotOpaque CALLBACK after recv')
 
     case code
     when 0
@@ -97,9 +98,9 @@ class ScreenshotOpaque
       print_usage "Opaque#finish_stream stream.finish #{@filepath}"
       stream.finish
       [true, nil]
-    rescue Libvirt::Errors::LibError => e
-      STDERR.puts "Opaque#finish_stream stream.finish exception rescued #{e.class} #{e.message}"
-      [false, e.message]
+             rescue Libvirt::Errors::LibError => e
+               warn "Opaque#finish_stream stream.finish exception rescued #{e.class} #{e.message}"
+               [false, e.message]
     end
     print_usage "Opaque#finish_stream ends #{@filepath}"
     result
@@ -159,14 +160,14 @@ Async do
   domain = c.list_all_domains.first
   DOMS.push(domain)
 
-  print_usage "First generation"
+  print_usage 'First generation'
   5.times do |i|
     save_screenshot(c, domain, 100 + i)
   end
 
   ASYNC_REACTOR.after(15) do
     Async::Task.new(ASYNC_REACTOR, nil) do
-      print_usage "Second generation"
+      print_usage 'Second generation'
 
       con = CONNS.first
       dom = DOMS.first
@@ -178,7 +179,7 @@ Async do
 
   ASYNC_REACTOR.after(30) do
     Async::Task.new(ASYNC_REACTOR, nil) do
-      print_usage "Third generation"
+      print_usage 'Third generation'
 
       con = CONNS.first
       dom = DOMS.first
@@ -193,5 +194,4 @@ Async do
       run_gc 'PERIODIC'
     end.run
   end
-
 end

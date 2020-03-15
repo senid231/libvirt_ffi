@@ -28,7 +28,8 @@ module Libvirt
     def lib_version
       version_ptr = ::FFI::MemoryPointer.new(:ulong)
       code = FFI::Host.virGetVersion(version_ptr, nil, nil)
-      raise Errors::LibError, 'failed to get version' if code < 0
+      raise Errors::LibError, 'failed to get version' if code.negative?
+
       version_number = version_ptr.get_ulong(0)
       Libvirt::Util.parse_version(version_number)
     end

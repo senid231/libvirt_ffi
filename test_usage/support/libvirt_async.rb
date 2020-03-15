@@ -2,13 +2,9 @@
 
 module LibvirtAsync
   class << self
-    def logger=(logger)
-      @logger = logger
-    end
+    attr_writer :logger
 
-    def logger
-      @logger
-    end
+    attr_reader :logger
   end
 
   module WithDbg
@@ -28,12 +24,11 @@ module LibvirtAsync
   end
 
   module Util
-    def create_task(parent = nil, reactor = nil, &block)
+    def self.create_task(parent = nil, reactor = nil, &block)
       parent = Async::Task.current? if parent == :current
       reactor ||= Async::Task.current.reactor
       Async::Task.new(reactor, parent, &block)
     end
-    module_function :create_task
   end
 
   class Handle
@@ -79,12 +74,8 @@ module LibvirtAsync
     def register
       dbg { "#{self.class}#register handle_id=#{handle_id}, fd=#{fd}" }
 
-      if (events & Libvirt::EVENT_HANDLE_ERROR) != 0
-        dbg { "#{self.class}#register skip EVENT_HANDLE_ERROR handle_id=#{handle_id}, fd=#{fd}" }
-      end
-      if (events & Libvirt::EVENT_HANDLE_HANGUP) != 0
-        dbg { "#{self.class}#register skip EVENT_HANDLE_HANGUP handle_id=#{handle_id}, fd=#{fd}" }
-      end
+      dbg { "#{self.class}#register skip EVENT_HANDLE_ERROR handle_id=#{handle_id}, fd=#{fd}" } if (events & Libvirt::EVENT_HANDLE_ERROR) != 0
+      dbg { "#{self.class}#register skip EVENT_HANDLE_HANGUP handle_id=#{handle_id}, fd=#{fd}" } if (events & Libvirt::EVENT_HANDLE_HANGUP) != 0
 
       interest = events_to_interest(events)
       dbg { "#{self.class}#register parse handle_id=#{handle_id}, fd=#{fd}, events=#{events}, interest=#{interest}" }
@@ -101,7 +92,7 @@ module LibvirtAsync
         io = IO.new(fd, io_mode, autoclose: false)
         @monitor = Monitor.new(io)
 
-        while @monitor.readiness == nil
+        while @monitor.readiness.nil?
           cancelled = wait_io(interest)
 
           if cancelled
@@ -119,7 +110,6 @@ module LibvirtAsync
 
           dbg { "#{self.class}#register_handle async not ready readiness=#{@monitor.readiness}, handle_id=#{handle_id}, fd=#{fd}" }
         end
-
       end
 
       dbg { "#{self.class}#register_handle invokes fiber=0x#{task.fiber.object_id.to_s(16)} handle_id=#{handle_id}, fd=#{fd}" }
@@ -199,8 +189,6 @@ module LibvirtAsync
         :r
       elsif writable
         :w
-      else
-        nil
       end
     end
 
@@ -225,8 +213,6 @@ module LibvirtAsync
         Libvirt::EVENT_HANDLE_READABLE
       when :w
         Libvirt::EVENT_HANDLE_WRITABLE
-      else
-        nil
       end
     end
   end
@@ -279,14 +265,15 @@ module LibvirtAsync
       dbg { "#{self.class}#initialize timer_id=#{timer_id}, interval=#{interval}" }
 
       @timer_id = timer_id
-      @interval = interval.to_f / 1000.to_f
+      @interval = interval / 1000.0
       @opaque = opaque
       @last_fired = Time.now.to_f
       @monitor = nil
     end
 
     def wait_time
-      return if interval < 0
+      return if interval.negative?
+
       last_fired + interval
     end
 
@@ -360,15 +347,12 @@ module LibvirtAsync
     end
 
     def wait_timer(timeout)
-      begin
-        @monitor.wait(timeout)
-        false
-      rescue Monitor::Cancelled => e
-        dbg { "#{self.class}#wait_timer cancelled #{e.class} #{e.message}" }
-        true
-      end
+      @monitor.wait(timeout)
+      false
+    rescue Monitor::Cancelled => e
+      dbg { "#{self.class}#wait_timer cancelled #{e.class} #{e.message}" }
+      true
     end
-
   end
 
   class Implementations
@@ -398,12 +382,12 @@ module LibvirtAsync
     def print_debug_info
       str = [
           "#{self.class}:0x#{object_id.to_s(16)}",
-          "handles = [",
+          'handles = [',
           @handles.map(&:to_s).join("\n"),
-          "]",
-          "timers = [",
+          ']',
+          'timers = [',
           @timers.map(&:to_s).join("\n"),
-          "]"
+          ']'
       ].join("\n")
       Libvirt.logger&.debug { str }
     end

@@ -10,15 +10,15 @@ module Libvirt
       ffi_lib Util.library_path
 
       # struct virNodeInfo {
-      #   char model[32] 	model - string indicating the CPU model
-      #   unsigned long 	memory - memory size in kilobytes
-      #   unsigned int 	cpus - the number of active CPUs
-      #   unsigned int 	mhz - expected CPU frequency, 0 if not known or on unusual architectures
-      #   unsigned int 	nodes - the number of NUMA cell, 1 for unusual NUMA topologies or uniform memory access;
+      #   char model[32]   model - string indicating the CPU model
+      #   unsigned long   memory - memory size in kilobytes
+      #   unsigned int   cpus - the number of active CPUs
+      #   unsigned int   mhz - expected CPU frequency, 0 if not known or on unusual architectures
+      #   unsigned int   nodes - the number of NUMA cell, 1 for unusual NUMA topologies or uniform memory access;
       #     check capabilities XML for the actual NUMA topology
-      #   unsigned int 	sockets - number of CPU sockets per node if nodes > 1, 1 in case of unusual NUMA topology
-      #   unsigned int 	cores - number of cores per socket, total number of processors in case of unusual NUMA topolog
-      #   unsigned int 	threads - number of threads per core, 1 in case of unusual numa topology
+      #   unsigned int   sockets - number of CPU sockets per node if nodes > 1, 1 in case of unusual NUMA topology
+      #   unsigned int   cores - number of cores per socket, total number of processors in case of unusual NUMA topolog
+      #   unsigned int   threads - number of threads per core, 1 in case of unusual numa topology
       # }
       class NodeInfoStruct < ::FFI::Struct
         layout :model, [:char, 32],
@@ -31,77 +31,74 @@ module Libvirt
                :threads, :uint
       end
 
-      # int	virGetVersion	(
+      # int  virGetVersion  (
       #   unsigned long *libVer,
       #   const char *type,
       #   unsigned long *typeVer
       # )
       attach_function :virGetVersion, [:pointer, :string, :pointer], :int
 
-      # int	virNodeGetInfo (
+      # int  virNodeGetInfo (
       #   virConnectPtr conn,
-      # 	virNodeInfoPtr info
+      #   virNodeInfoPtr info
       # )
       attach_function :virNodeGetInfo, [:pointer, :pointer], :int
 
-      # typedef void	(*virConnectCloseFunc) (
+      # typedef void  (*virConnectCloseFunc) (
       #   virConnectPtr conn,
-      # 	int reason,
-      # 	void * opaque
+      #   int reason,
+      #   void * opaque
       # )
       callback :virConnectCloseFunc, [:pointer, :int, :pointer], :void
 
-      # virConnectPtr	virConnectOpen (const char * name)
+      # virConnectPtr  virConnectOpen (const char * name)
       attach_function :virConnectOpen, [:string], :pointer
 
-      # int	virConnectGetVersion (virConnectPtr conn, unsigned long *hvVer)
-      attach_function :virConnectGetVersion, [:pointer, :pointer], :int
-
-      # int	virConnectSetKeepAlive (
+      # int  virConnectSetKeepAlive (
       #   virConnectPtr conn,
-      # 	int interval,
-      # 	unsigned int count
+      #   int interval,
+      #   unsigned int count
       # )
       attach_function :virConnectSetKeepAlive, [:pointer, :int, :uint], :int
 
-      # int	virConnectGetVersion (
+      # int  virConnectGetVersion (
       #   virConnectPtr conn,
-      # 	unsigned long * hvVer
+      #   unsigned long * hvVer
       # )
       attach_function :virConnectGetVersion, [:pointer, :pointer], :int
 
-      # int	virConnectGetLibVersion	(
+      # int  virConnectGetLibVersion  (
       #   virConnectPtr conn,
-      # 	unsigned long * libVer
+      #   unsigned long * libVer
       # )
       attach_function :virConnectGetLibVersion, [:pointer, :pointer], :int
 
-      # char *	virConnectGetHostname	(
+      # char *  virConnectGetHostname  (
       #   virConnectPtr conn
       # )
       attach_function :virConnectGetHostname, [:pointer], :string # strptr ?
 
-      # int	virConnectGetMaxVcpus	(
+      # int  virConnectGetMaxVcpus  (
       #   virConnectPtr conn,
       #   const char * type
       # )
       attach_function :virConnectGetMaxVcpus, [:pointer, :string], :int
 
-      # char *	virConnectGetCapabilities	(
+      # char *  virConnectGetCapabilities  (
       #   virConnectPtr conn
       # )
-      attach_function :virConnectGetCapabilities, [:pointer],  :string # strptr ?
+      attach_function :virConnectGetCapabilities, [:pointer], :string # strptr ?
 
-      # int	virConnectClose	(
+      # int  virConnectClose  (
       #   virConnectPtr conn
       # )
       attach_function :virConnectClose, [:pointer], :int
 
-      # int	virConnectRegisterCloseCallback	(
+      # int  virConnectRegisterCloseCallback  (
       #   virConnectPtr conn,
-      # 	virConnectCloseFunc cb,
-      # 	void * opaque,
-      # 	virFreeCallback freecb
+      #   virConnectCloseFunc cb,
+      #   void * opaque,
+      #   virFreeCallback freecb
       # )
       attach_function :virConnectRegisterCloseCallback, [
           :pointer,
@@ -110,13 +107,13 @@ module Libvirt
           FFI::Common::FREE_CALLBACK
       ], :int
 
-      # int	virConnectUnregisterCloseCallback	(
+      # int  virConnectUnregisterCloseCallback  (
       #   virConnectPtr conn,
-      # 	virConnectCloseFunc cb
+      #   virConnectCloseFunc cb
       # )
       attach_function :virConnectUnregisterCloseCallback, [:pointer, :pointer], :int
 
-      # int	virConnectRef	(
+      # int  virConnectRef  (
       #   virConnectPtr conn
       # )
       attach_function :virConnectRef, [:pointer], :int

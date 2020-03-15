@@ -18,7 +18,6 @@ module Libvirt
           :INACCESSIBLE, 0x4 # Running, but not accessible
       ]
 
-
       # enum virConnectListAllStoragePoolsFlags
       enum :list_all_pools_flags, [
           :INACTIVE, 0x1,
@@ -65,10 +64,10 @@ module Libvirt
       ]
 
       # struct virStoragePoolInfo {
-      #   int 	state #   virStoragePoolState flags
-      #   unsigned long long 	capacity #   Logical size bytes
-      #   unsigned long long 	allocation #   Current allocation bytes
-      #   unsigned long long 	available #   Remaining free space bytes
+      #   int   state #   virStoragePoolState flags
+      #   unsigned long long   capacity #   Logical size bytes
+      #   unsigned long long   allocation #   Current allocation bytes
+      #   unsigned long long   available #   Remaining free space bytes
       # }
       class PoolInfoStruct < ::FFI::Struct
         layout :state, FFI::Storage.enum_type(:pool_state),
@@ -78,9 +77,9 @@ module Libvirt
       end
 
       # struct virStorageVolInfo {
-      #   int 	type #   virStorageVolType flags
-      #   unsigned long long 	capacity #   Logical size bytes
-      #   unsigned long long 	allocation #   Current allocation bytes
+      #   int   type #   virStorageVolType flags
+      #   unsigned long long   capacity #   Logical size bytes
+      #   unsigned long long   allocation #   Current allocation bytes
       # }
       class VolumeInfoStruct < ::FFI::Struct
         layout :type, FFI::Storage.enum_type(:volume_type),
@@ -88,53 +87,53 @@ module Libvirt
                :allocation, :ulong_long
       end
 
-      # int	virConnectListAllStoragePools (
+      # int  virConnectListAllStoragePools (
       #   virConnectPtr conn,
-      # 	virStoragePoolPtr ** pools,
-      # 	unsigned int flags
+      #   virStoragePoolPtr ** pools,
+      #   unsigned int flags
       # )
       attach_function :virConnectListAllStoragePools, [:pointer, :pointer, :uint], :int
 
-      # int	virStoragePoolGetInfo	(
+      # int  virStoragePoolGetInfo  (
       #   virStoragePoolPtr pool,
-      # 	virStoragePoolInfoPtr info
+      #   virStoragePoolInfoPtr info
       # )
       attach_function :virStoragePoolGetInfo, [:pointer, :pointer], :int
 
-      # char *	virStoragePoolGetXMLDesc	(
+      # char *  virStoragePoolGetXMLDesc  (
       #   virStoragePoolPtr pool,
-      # 	unsigned int flags
+      #   unsigned int flags
       # )
       attach_function :virStoragePoolGetXMLDesc, [:pointer, :xml_flags], :string
 
-      # int	virStoragePoolRef	(
+      # int  virStoragePoolRef  (
       #   virStoragePoolPtr pool
       # )
       attach_function :virStoragePoolRef, [:pointer], :int
 
-      # int	virStoragePoolFree	(
+      # int  virStoragePoolFree  (
       #   virStoragePoolPtr pool
       # )
       attach_function :virStoragePoolFree, [:pointer], :int
 
-      # int	virStoragePoolListAllVolumes (
+      # int  virStoragePoolListAllVolumes (
       #   virStoragePoolPtr pool,
-      # 	virStorageVolPtr ** vols,
-      # 	unsigned int flags
+      #   virStorageVolPtr ** vols,
+      #   unsigned int flags
       # )
       attach_function :virStoragePoolListAllVolumes, [:pointer, :pointer, :uint], :int
 
-      # int	virStorageVolRef (
+      # int  virStorageVolRef (
       #   virStorageVolPtr vol
       # )
       attach_function :virStorageVolRef, [:pointer], :int
 
-      # int	virStorageVolFree (
+      # int  virStorageVolFree (
       #   virStorageVolPtr vol
       # )
       attach_function :virStorageVolFree, [:pointer], :int
 
-      # int	virStorageVolGetInfo (
+      # int  virStorageVolGetInfo (
       #   virStorageVolPtr vol,
       #   virStorageVolInfoPtr info
       # )
@@ -142,10 +141,9 @@ module Libvirt
 
       # char * virStorageVolGetXMLDesc (
       #   virStorageVolPtr vol,
-      # 	unsigned int flags
+      #   unsigned int flags
       # )
       attach_function :virStorageVolGetXMLDesc, [:pointer, :xml_flags], :string
-
     end
   end
 end

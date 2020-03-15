@@ -18,7 +18,7 @@ module Libvirt
       attribute :target_perm_owner, path: './target/permissions/owner'
       attribute :target_perm_group, path: './target/permissions/group'
       attribute :target_perm_label, path: './target/permissions/label'
-      # todo source
+      # TODO: source
     end
   end
 end

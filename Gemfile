@@ -5,14 +5,14 @@ source 'https://rubygems.org'
 # Specify your gem's dependencies in libvirt.gemspec
 gemspec
 
-gem 'rake', '~> 12.0'
 gem 'minitest', '~> 5.0'
+gem 'rake', '~> 12.0'
 
 gem 'nokogiri'
 
 group :development do
-  gem 'async', '~> 1.24'
   gem 'activesupport'
-  gem 'get_process_mem'
+  gem 'async', '~> 1.24'
   gem 'gc_tracer'
+  gem 'get_process_mem'
 end
