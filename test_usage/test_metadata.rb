@@ -51,7 +51,7 @@ Async do
   puts "Connection hostname #{conn.hostname.inspect}"
 
   dom = conn.list_all_domains.first
-  puts "Domain #{dom.uuid} #{dom.name}"
+  puts "Domain #{dom.uuid} #{dom.name} #{dom.get_state}"
 
   libvirt_safe do
     dom.start

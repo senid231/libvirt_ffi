@@ -693,6 +693,7 @@ module Libvirt
       callback :virConnectDomainEventMetadataChangeCallback, [
           :pointer,
           :pointer,
+          :metadata_type,
           :string,
           :pointer
       ], :void
