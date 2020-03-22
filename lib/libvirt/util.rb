@@ -59,7 +59,7 @@ module Libvirt
       end
 
       # Bitwise OR integer flags calculation for C language.
-      # @param flags [Integer,Array<Symbol>,Hash{Symbol=>Boolean},nil]
+      # @param flags [Integer,Symbol,Array<Symbol>,Hash{Symbol=>Boolean},nil]
       # @param enum [FFI::Enum]
       # @param default [Integer] optional (default 0x0)
       # @return [Integer] bitwise OR of keys
@@ -73,12 +73,13 @@ module Libvirt
       #
       def parse_flags(flags, enum, default: 0x0)
         flags = default if flags.nil?
+        flags = enum[flags] if flags.is_a?(Symbol)
         return flags if flags.is_a?(Integer)
 
         result = 0x0
         flags = flags.select { |_, v| v }.keys if flags.is_a?(Hash)
 
-        raise ArgumentError, 'flags must be an Integer or a Hash or an Array' unless flag.is_a?(Array)
+        raise ArgumentError, 'flags must be an Integer or a Hash or an Array' unless flags.is_a?(Array)
 
         flags.each do |key|
           result |= enum[key.to_s.upcase.to_sym]

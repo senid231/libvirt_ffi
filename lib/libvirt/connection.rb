@@ -69,7 +69,7 @@ module Libvirt
       raise Errors::LibError, "Couldn't retrieve connection version" if result.negative?
 
       version_number = version_ptr.get_ulong(0)
-      Libvirt::Util.parse_version(version_number)
+      Util.parse_version(version_number)
     end
 
     def set_keep_alive(interval, count)
@@ -193,7 +193,7 @@ module Libvirt
       raise Errors::LibError, "Couldn't get connection lib version" if result.negative?
 
       version_number = version_ptr.get_ulong(0)
-      Libvirt::Util.parse_version(version_number)
+      Util.parse_version(version_number)
     end
 
     def hostname
@@ -225,7 +225,7 @@ module Libvirt
     end
 
     def define_domain(xml, options_or_flags = nil)
-      flags = Libvirt::Util.parse_flags options_or_flags, FFI::Domain.enum_type(:define_flags)
+      flags = Util.parse_flags options_or_flags, FFI::Domain.enum_type(:define_flags)
       pointer = FFI::Domain.virDomainDefineXMLFlags(@conn_ptr, xml, flags)
       raise Errors::LibError, "Couldn't define domain" if pointer.null?
 

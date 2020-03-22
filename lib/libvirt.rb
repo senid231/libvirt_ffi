@@ -31,7 +31,7 @@ module Libvirt
       raise Errors::LibError, 'failed to get version' if code.negative?
 
       version_number = version_ptr.get_ulong(0)
-      Libvirt::Util.parse_version(version_number)
+      Util.parse_version(version_number)
     end
 
     def logger

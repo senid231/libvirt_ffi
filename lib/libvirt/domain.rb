@@ -128,12 +128,12 @@ module Libvirt
     # Undefine a domain.
     # If the domain is running, it's converted to transient domain, without stopping it.
     # If the domain is inactive, the domain configuration is removed.
-    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,nil]
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
     # @see Libvirt::FFI::Domain enum :undefine_flags_values for acceptable keys
     # @see Libvirt::Util.parse_flags for possible argument values
     # @raise [Libvirt::Errors::LibError] if operation failed
     def undefine(options_or_flags = nil)
-      flags = Libvirt::Util.parse_flags options_or_flags, FFI::Domain.enum_type(:undefine_flags_values)
+      flags = Util.parse_flags options_or_flags, FFI::Domain.enum_type(:undefine_flags_values)
       result = FFI::Domain.virDomainUndefineFlags(@dom_ptr, flags)
       raise Errors::LibError, "Couldn't resume domain" if result.negative?
     end
@@ -143,6 +143,40 @@ module Libvirt
     def save_memory(flags = :PAUSED)
       result = FFI::Domain.virDomainManagedSave(@dom_ptr, flags)
       raise Errors::LibError, "Couldn't save domain memory" if result.negative?
+    end
+
+    # Sets metadata
+    # @param metadata [String] xml node for element type, text for other types
+    #   DESCRIPTION 0x0 - Operate on <description>
+    #   TITLE 0x1 - Operate on <title>
+    #   ELEMENT 0x2 - Operate on <metadata>
+    # @param type [Integer,Symbol] one of :ELEMENT, :TITLE, :DESCRIPTION
+    # @param key [String] xml key (required for type element)
+    # @param uri [String] xml namespace (required for type element)
+    # @param flags [Integer,Symbol] one off AFFECT_CURRENT, AFFECT_CONFIG, AFFECT_LIVE
+    #   AFFECT_CURRENT 0x0 - Affect current domain state.
+    #   AFFECT_LIVE 0x1 - Affect running domain state.
+    #   AFFECT_CONFIG 0x2 - Affect persistent domain state.
+    # @raise [Libvirt::Errors::LibError] if operation failed
+    def set_metadata(metadata, type: :ELEMENT, key: nil, uri: nil, flags: :AFFECT_CURRENT)
+      result = FFI::Domain.virDomainSetMetadata(@dom_ptr, type, metadata, key, uri, flags)
+      raise Errors::LibError, "Couldn't set domain metadata" if result.negative?
+    end
+
+    # Retrieves metadata
+    # @param type [Integer,Symbol] one of :ELEMENT, :TITLE, :DESCRIPTION
+    # @param uri [String] xml namespace (required for type element)
+    # @param flags [Integer,Symbol] one off AFFECT_CURRENT, AFFECT_CONFIG, AFFECT_LIVE
+    #   AFFECT_CURRENT 0x0 - Affect current domain state.
+    #   AFFECT_LIVE 0x1 - Affect running domain state.
+    #   AFFECT_CONFIG 0x2 - Affect persistent domain state.
+    # @raise [Libvirt::Errors::LibError] if operation failed
+    # @return [String] xml node, title, or description.
+    def get_metadata(type: :ELEMENT, uri: nil, flags: :AFFECT_CURRENT)
+      result = FFI::Domain.virDomainGetMetadata(@dom_ptr, type, uri, flags)
+      raise Errors::LibError, "Couldn't get domain metadata" if result.nil?
+
+      result
     end
 
     private

@@ -248,27 +248,49 @@ module Libvirt
 
       # enum virDomainShutdownFlagValues
       enum :shutdown_flags, [
-        :DEFAULT, 0x0, # hypervisor choice
-        :ACPI_POWER_BTN, 0x1, # Send ACPI event
-        :GUEST_AGENT, 0x2, # Use guest agent
-        :INITCTL, 0x4, # Use initctl
-        :SIGNAL, 0x8, # Send a signal
-        :PARAVIRT, 0x10 # Use paravirt guest control
+          :DEFAULT, 0x0, # hypervisor choice
+          :ACPI_POWER_BTN, 0x1, # Send ACPI event
+          :GUEST_AGENT, 0x2, # Use guest agent
+          :INITCTL, 0x4, # Use initctl
+          :SIGNAL, 0x8, # Send a signal
+          :PARAVIRT, 0x10 # Use paravirt guest control
       ]
 
       # enum virDomainUndefineFlagsValues
       enum :undefine_flags_values, [
-            :MANAGED_SAVE, 0x1, # Also remove any managed save
-            :SNAPSHOTS_METADATA, 0x2, # If last use of domain, then also remove any snapshot metadata
-            :NVRAM, 0x4, # Also remove any nvram file
-            :KEEP_NVRAM, 0x8, # Keep nvram file
-            :CHECKPOINTS_METADATA, 0x10 # If last use of domain, then also remove any checkpoint metadata Future undefine control flags should come here.
+          :MANAGED_SAVE, 0x1, # Also remove any managed save
+          :SNAPSHOTS_METADATA, 0x2, # If last use of domain, then also remove any snapshot metadata
+          :NVRAM, 0x4, # Also remove any nvram file
+          :KEEP_NVRAM, 0x8, # Keep nvram file
+          :CHECKPOINTS_METADATA, 0x10 # If last use of domain, then also remove any checkpoint metadata Future undefine control flags should come here.
       ]
 
       # enum virDomainDefineFlags
       enum :define_flags, [
           :DEFINE_VALIDATE, 0x1 # Validate the XML document against schema
-        ]
+      ]
+
+      # enum virDomainMetadataType
+      enum :metadata_type, [
+          :DESCRIPTION, 0x0, # Operate on <description>
+          :TITLE, 0x1, # Operate on <title>
+          :ELEMENT, 0x2 # Operate on <metadata>
+      ]
+
+      # enum virDomainModificationImpact
+      enum :modification_impact, [
+          :AFFECT_CURRENT, 0x0, # Affect current domain state.
+          :AFFECT_LIVE, 0x1, # Affect running domain state.
+          :AFFECT_CONFIG, 0x2 # Affect persistent domain state. 1 << 2 is reserved for virTypedParameterFlags
+      ]
+
+      # enum virDomainXMLFlags
+      enum :xml_flags, [
+          :SECURE, 0x1, # dump security sensitive information too
+          :INACTIVE, 0x2, # dump inactive domain information
+          :UPDATE_CPU, 0x4, # update guest CPU requirements according to host CPU
+          :MIGRATABLE, 0x8 # dump XML suitable for migration
+      ]
 
       # int  virDomainFree  (
       #   virDomainPtr domain
@@ -321,7 +343,7 @@ module Libvirt
       # const char *virDomainGetName (
       #   virDomainPtr domain
       # )
-      attach_function :virDomainGetName, [:pointer], :string # strptr?
+      attach_function :virDomainGetName, [:pointer], :string
 
       # int  virDomainGetMaxVcpus (
       #   virDomainPtr domain
@@ -352,7 +374,7 @@ module Libvirt
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
-      attach_function :virDomainGetXMLDesc, [:pointer, :uint], :string # strptr?
+      attach_function :virDomainGetXMLDesc, [:pointer, :xml_flags], :string
 
       # char *virDomainScreenshot (
       #   virDomainPtr domain,
@@ -752,6 +774,28 @@ module Libvirt
       #   unsigned int flags
       # )
       attach_function :virDomainDefineXMLFlags, [:pointer, :string, :uint], :pointer
+
+      # int  virDomainSetMetadata (
+      #   virDomainPtr domain,
+      #   int type,
+      #   const char * metadata,
+      #   const char * key,
+      #   const char * uri,
+      #   unsigned int flags
+      # )
+      attach_function :virDomainSetMetadata,
+                      [:pointer, :metadata_type, :string, :string, :string, :modification_impact],
+                      :int
+
+      # char * virDomainGetMetadata (
+      #   virDomainPtr domain,
+      #   int type,
+      #   const char * uri,
+      #   unsigned int flags
+      # )
+      attach_function :virDomainGetMetadata,
+                      [:pointer, :metadata_type, :string, :modification_impact],
+                      :string
 
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
