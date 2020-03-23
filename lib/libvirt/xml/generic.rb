@@ -167,7 +167,7 @@ module Libvirt
       def parse_node_text(name, opts)
         nodes = find_nodes(name, opts)
 
-        nodes.map(&:text) if opts[:array]
+        return nodes.map(&:text) if opts[:array]
 
         node = nodes.first
         return if node.nil?
@@ -179,7 +179,7 @@ module Libvirt
         nodes = find_nodes name, { path: :root }.merge(opts)
         value_name = opts[:name]&.to_sym || name
 
-        nodes.map { |node| node[value_name.to_s] } if opts[:array]
+        return nodes.map { |node| node[value_name.to_s] } if opts[:array]
 
         node = nodes.first
         return if node.nil?
@@ -193,7 +193,7 @@ module Libvirt
 
         nodes = find_nodes(name, opts)
 
-        nodes.map { |node| klass.new(node) } if opts[:array]
+        return nodes.map { |node| klass.new(node) } if opts[:array]
 
         node = nodes.first
         return if node.nil?
@@ -204,7 +204,7 @@ module Libvirt
       def parse_node_raw(name, opts)
         nodes = find_nodes(name, opts)
 
-        nodes.map(&:to_xml) if opts[:array]
+        return nodes.map(&:to_xml) if opts[:array]
 
         node = nodes.first
         return if node.nil?
@@ -218,7 +218,7 @@ module Libvirt
         if opts[:array]
           return [] if nodes.empty?
 
-          nodes.map { |node| Util.parse_memory node.text, node['unit'] }
+          return nodes.map { |node| Util.parse_memory node.text, node['unit'] }
         end
 
         node = nodes.first

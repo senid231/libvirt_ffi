@@ -14,7 +14,7 @@ module Libvirt
       attribute :description
       attribute :metadata, type: :raw
       attribute :vcpu, type: :struct, class: MaxVcpu
-      attribute :vcpus, type: :struct, array: true, class: Vcpu, cast: ->(objects) { objects.sort_by(&:id) }
+      attribute :vcpus, type: :struct, array: true, class: Vcpu, cast: ->(objects, _) { objects.sort_by(&:id) }
       attribute :memory, type: :struct, class: Memory
       attribute :current_memory, type: :struct, class: Memory
       attribute :max_memory, type: :struct, class: Memory
