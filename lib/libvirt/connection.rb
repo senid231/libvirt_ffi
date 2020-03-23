@@ -79,6 +79,13 @@ module Libvirt
       result.zero?
     end
 
+    def free_memory
+      result = FFI::Host.virNodeGetFreeMemory(@conn_ptr)
+      raise Errors::LibError, "Couldn't set connection keep_alive" if result.negative?
+
+      result
+    end
+
     def to_s
       "#<#{self.class}:0x#{object_id.to_s(16)} @uri=#{@uri.inspect} @conn_ptr=0x#{@conn_ptr.address.to_s(16)}>"
     end

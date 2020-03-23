@@ -117,6 +117,11 @@ module Libvirt
       #   virConnectPtr conn
       # )
       attach_function :virConnectRef, [:pointer], :int
+
+      # unsigned long long virNodeGetFreeMemory (
+      #   virConnectPtr conn
+      # )
+      attach_function :virNodeGetFreeMemory, [:pointer], :u_long_long
     end
   end
 end
