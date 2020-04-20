@@ -798,6 +798,11 @@ module Libvirt
                       [:pointer, :metadata_type, :string, :modification_impact],
                       :string
 
+      # int virDomainIsPersistent (
+      #   virDomainPtr dom
+      # )
+      attach_function :virDomainIsPersistent, [:pointer], :int
+
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
       # @param detail [Integer]

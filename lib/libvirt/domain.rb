@@ -179,6 +179,13 @@ module Libvirt
       result
     end
 
+    def persistent?
+      result = FFI::Domain.virDomainIsPersistent(@dom_ptr)
+      raise Errors::LibError, "Couldn't set domain metadata" if result.negative?
+
+      result == 1
+    end
+
     private
 
     def dbg(&block)
