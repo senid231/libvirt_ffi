@@ -141,7 +141,12 @@ module Libvirt
       @close_data = { opaque: opaque, block: block }
       @close_cb = FFI::Host.callback_function(:virConnectCloseFunc) do |_conn, reason, _op|
         dbg { "CONNECTION CLOSED @conn_ptr=#{@conn_ptr} reason=#{reason}" }
-        @close_data[:block].call(self, reason, @close_data[:opaque])
+        block = @close_data[:block]
+        opaque = @close_data[:opaque]
+        # we clear @closed_data here, because connection can be opened again and
+        # add new close callback inside `block`.
+        @close_data = nil
+        block.call(self, reason, opaque)
       end
       @close_free_func = FFI::Common.free_function do
         dbg { "CONNECTION CLOSED FREE FUNC @conn_ptr=#{@conn_ptr}" }
