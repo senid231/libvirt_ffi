@@ -19,6 +19,8 @@ module Libvirt
         TiB: 1_099_511_627_776
     }.freeze
 
+    UUID_STRING_BUFLEN = 0x80 # RFC4122
+
     class << self
       attr_writer :logger
 

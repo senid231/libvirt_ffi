@@ -38,7 +38,7 @@ module Libvirt
     end
 
     def uuid
-      buff = ::FFI::MemoryPointer.new(:char, FFI::Domain::UUID_STRING_BUFLEN)
+      buff = ::FFI::MemoryPointer.new(:char, Util::UUID_STRING_BUFLEN)
       result = FFI::Domain.virDomainGetUUIDString(@dom_ptr, buff)
       raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
 
@@ -46,7 +46,10 @@ module Libvirt
     end
 
     def name
-      FFI::Domain.virDomainGetName(@dom_ptr)
+      result = FFI::Domain.virDomainGetName(@dom_ptr)
+      raise Errors::LibError, "Couldn't retrieve storage pool name" if result.nil?
+
+      result
     end
 
     def max_vcpus

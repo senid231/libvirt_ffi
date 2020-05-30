@@ -9,8 +9,6 @@ module Libvirt
       extend Helpers
       ffi_lib Util.library_path
 
-      UUID_STRING_BUFLEN = 0x80 # RFC4122
-
       EVENT_ID_TO_CALLBACK = {
           LIFECYCLE: :virConnectDomainEventCallback,
           REBOOT: :virConnectDomainEventGenericCallback,
@@ -812,6 +810,10 @@ module Libvirt
         detail_enum[detail]
       end
 
+      # Converts state reason of domain from integer to symbol name.
+      # @param state [Symbol] enum :state (virDomainState)
+      # @param reason [Integer]
+      # @return [Symbol]
       def self.state_reason(state, reason)
         reason_enum = enum_type(:"#{state.to_s.downcase}_reason")
         reason_enum[reason]
