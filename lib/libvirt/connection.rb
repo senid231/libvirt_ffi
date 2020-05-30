@@ -5,8 +5,9 @@ module Libvirt
     DOMAIN_EVENT_IDS = FFI::Domain.enum_type(:event_id).symbols.dup.freeze
     POOL_EVENT_IDS = FFI::Storage.enum_type(:event_id).symbols.dup.freeze
 
-    DOMAIN_STORAGE = HostCallbackStorage.new
-    POOL_STORAGE = HostCallbackStorage.new
+    DOMAIN_STORAGE = HostCallbackStorage.new(:domain_event)
+    POOL_STORAGE = HostCallbackStorage.new(:storage_pool_event)
+    CLOSE_STORAGE = HostCallbackStorage.new(:close)
 
     DOMAIN_EVENT_CALLBACKS = DOMAIN_EVENT_IDS.map do |event_id_sym|
       func = FFI::Domain.event_callback_for(event_id_sym) do |conn_ptr, dom_ptr, *args, op_ptr|
@@ -33,6 +34,13 @@ module Libvirt
       end
       [event_id_sym, func]
     end.to_h.freeze
+
+    CLOSE_CALLBACK = FFI::Host.callback_function(:virConnectCloseFunc) do |conn_ptr, reason, op_ptr|
+      Util.log(:debug, 'CLOSE_CALLBACK') { "inside callback conn_ptr=#{conn_ptr}, reason=#{reason}, op_ptr=#{op_ptr}" }
+      connection = Connection.load_ref(conn_ptr)
+      block, opaque = CLOSE_STORAGE.retrieve_from_pointer(op_ptr)
+      block.call(connection, reason, opaque)
+    end
 
     def self.load_ref(conn_ptr)
       ref_result = FFI::Host.virConnectRef(conn_ptr)
@@ -154,23 +162,27 @@ module Libvirt
 
     def register_close_callback(opaque = nil, &block)
       dbg { "#register_close_callback opaque=#{opaque}" }
-      raise ArgumentError, 'close function already registered' if @close_data
 
-      @close_data = { opaque: opaque, block: block }
-      @close_cb = FFI::Host.callback_function(:virConnectCloseFunc) do |_conn, reason, _op|
-        dbg { "CONNECTION CLOSED @conn_ptr=#{@conn_ptr} reason=#{reason}" }
-        block = @close_data[:block]
-        opaque = @close_data[:opaque]
-        # we clear @closed_data here, because connection can be opened again and
-        # add new close callback inside `block`.
-        @close_data = nil
-        block.call(self, reason, opaque)
+      cb_data, cb_data_free_func = CLOSE_STORAGE.allocate_struct
+      result = FFI::Host.virConnectRegisterCloseCallback(
+          @conn_ptr,
+          CLOSE_CALLBACK,
+          cb_data.pointer,
+          cb_data_free_func
+      )
+      if result.negative?
+        cb_data.pointer.free
+        raise Errors::LibError, "Couldn't register connection close callback"
       end
-      @close_free_func = FFI::Common.free_function do
-        dbg { "CONNECTION CLOSED FREE FUNC @conn_ptr=#{@conn_ptr}" }
-        @close_cb = @close_free_func = @close_data = nil
-      end
-      FFI::Host.virConnectRegisterCloseCallback(@conn_ptr, @close_cb, nil, @close_free_func)
+
+      CLOSE_STORAGE.store_struct(
+          cb_data,
+          connection_pointer: @conn_ptr,
+          callback_id: result,
+          cb: block,
+          opaque: opaque
+      )
+      result
     end
 
     # @yield conn, dom, *args
@@ -247,6 +259,28 @@ module Libvirt
           opaque: opaque
       )
       result
+    end
+
+    def deregister_storage_pool_event_callback(callback_id)
+      dbg { "#deregister_storage_pool_event_callback callback_id=#{callback_id}" }
+
+      result = FFI::Storage.virConnectStoragePoolEventDeregisterAny(@conn_ptr, callback_id)
+      raise Errors::LibError, "Couldn't deregister storage pool event callback" if result.negative?
+
+      # virConnectStoragePoolEventDeregisterAny will call free func
+      # So we don't need to remove object from POOL_STORAGE here.
+      true
+    end
+
+    def deregister_close_callback
+      dbg { '#deregister_close_callback' }
+
+      result = FFI::Host.virConnectUnregisterCloseCallback(@conn_ptr, CLOSE_CALLBACK)
+      raise Errors::LibError, "Couldn't deregister close callback" if result.negative?
+
+      # virConnectUnregisterCloseCallback will call free func
+      # So we don't need to remove object from CLOSE_STORAGE here.
+      true
     end
 
     def lib_version

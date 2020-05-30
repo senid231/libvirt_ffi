@@ -7,7 +7,10 @@ module Libvirt
              :callback_id, :int
     end
 
-    def initialize
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
       @inner_storage = Hash.new { |h, key| h[key] = {} }
     end
 
@@ -20,7 +23,7 @@ module Libvirt
       cb_data_ptr = ::FFI::MemoryPointer.new(:char, CallbackDataStruct.size, false)
       cb_data = CallbackDataStruct.new(cb_data_ptr)
       cb_data_free_func = FFI::Common.free_function do |pointer|
-        dbg { 'Libvirt::HostCallbackStorage cb_data_free_func triggered' }
+        dbg { "cb_data_free_func triggered pointer=#{pointer}" }
         remove_struct(pointer)
       end
       [cb_data, cb_data_free_func]
@@ -35,7 +38,7 @@ module Libvirt
     end
 
     def remove_struct(pointer)
-      dbg { "#remove_struct pointer=#{pointer}" }
+      dbg { "#remove_struct pointer=#{pointer}," }
 
       cb_data_struct = CallbackDataStruct.new(pointer)
       connection_pointer = cb_data_struct[:connection_pointer]
@@ -63,7 +66,7 @@ module Libvirt
     private
 
     def dbg(&block)
-      Util.log(:debug, 'Libvirt::HostCallbackStorage', &block)
+      Util.log(:debug, "Libvirt::HostCallbackStorage(#{name})", &block)
     end
   end
 end
