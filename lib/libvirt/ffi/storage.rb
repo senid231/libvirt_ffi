@@ -9,6 +9,11 @@ module Libvirt
       extend Helpers
       ffi_lib Util.library_path
 
+      EVENT_ID_TO_CALLBACK = {
+          LIFECYCLE: :virConnectStoragePoolEventLifecycleCallback,
+          REFRESH: :virConnectStoragePoolEventGenericCallback
+      }.freeze
+
       # enum virStoragePoolState
       enum :pool_state, [
           :INACTIVE, 0x0, # Not running
@@ -63,6 +68,23 @@ module Libvirt
           :INACTIVE, 0x1 # dump inactive pool/volume information
       ]
 
+      # enum virStoragePoolEventID
+      enum :event_id, [
+          :LIFECYCLE, 0x0, # virConnectStoragePoolEventLifecycleCallback
+          :REFRESH, 0x1 # virConnectStoragePoolEventGenericCallback
+      ]
+
+      # enum virStoragePoolEventLifecycleType
+      enum :event_lifecycle_type, [
+          :DEFINED, 0x0,
+          :UNDEFINED, 0x1,
+          :STARTED, 0x2,
+          :STOPPED, 0x3,
+          :CREATED, 0x4,
+          :DELETED, 0x5,
+          :LAST, 0x6
+      ]
+
       # struct virStoragePoolInfo {
       #   int   state #   virStoragePoolState flags
       #   unsigned long long   capacity #   Logical size bytes
@@ -86,6 +108,26 @@ module Libvirt
                :capacity, :ulong_long,
                :allocation, :ulong_long
       end
+
+      # typedef void (*virConnectStoragePoolEventGenericCallback) (
+      #   virConnectPtr conn,
+      #   virStoragePoolPtr pool,
+      #   void * opaque
+      # )
+      callback :virConnectStoragePoolEventGenericCallback,
+               [:pointer, :pointer, :pointer],
+               :void
+
+      # typedef void (*virConnectStoragePoolEventLifecycleCallback) (
+      #   virConnectPtr conn,
+      #   virStoragePoolPtr pool,
+      #   int event,
+      #   int detail,
+      #   void * opaque
+      # )
+      callback :virConnectStoragePoolEventLifecycleCallback,
+               [:pointer, :pointer, :event_lifecycle_type, :int, :pointer],
+               :void
 
       # int  virConnectListAllStoragePools (
       #   virConnectPtr conn,
@@ -144,6 +186,49 @@ module Libvirt
       #   unsigned int flags
       # )
       attach_function :virStorageVolGetXMLDesc, [:pointer, :xml_flags], :string
+
+      # int  virConnectStoragePoolEventRegisterAny (
+      #   virConnectPtr conn,
+      #   virStoragePoolPtr pool,
+      #   int eventID,
+      #   virConnectStoragePoolEventGenericCallback cb,
+      #   void * opaque,
+      #   virFreeCallback freecb
+      # )
+      attach_function :virConnectStoragePoolEventRegisterAny,
+                      [:pointer, :pointer, :event_id, :pointer, :pointer, FFI::Common::FREE_CALLBACK],
+                      :int
+
+      # int  virConnectStoragePoolEventDeregisterAny (
+      #   virConnectPtr conn,
+      #   int callbackID
+      # )
+      attach_function :virConnectStoragePoolEventDeregisterAny,
+                      [:pointer, :int],
+                      :int
+
+      # int  virStoragePoolGetUUIDString  (virStoragePoolPtr pool,
+      #            char * buf)
+      attach_function :virStoragePoolGetUUIDString, [:pointer, :pointer], :int
+
+      # const char *  virStoragePoolGetName  (virStoragePoolPtr pool)
+      attach_function :virStoragePoolGetName, [:pointer], :string
+
+      module_function
+
+      # Creates event callback function for provided event_id
+      # @param event_id [Integer,Symbol]
+      # @yield connect_ptr, domain_ptr, *args, opaque_ptr
+      # @return [FFI::Function]
+      def event_callback_for(event_id, &block)
+        event_id_sym = event_id.is_a?(Symbol) ? event_id : enum_type(:event_id)[event_id]
+
+        callback_name = EVENT_ID_TO_CALLBACK.fetch(event_id_sym)
+        callback_function(callback_name) do |*args|
+          Util.log(:debug, name) { ".event_callback_for #{event_id_sym} CALLBACK #{args.map(&:to_s).join(', ')}," }
+          block.call(*args)
+        end
+      end
     end
   end
 end

@@ -3,15 +3,33 @@
 module Libvirt
   class Connection
     DOMAIN_EVENT_IDS = FFI::Domain.enum_type(:event_id).symbols.dup.freeze
+    POOL_EVENT_IDS = FFI::Storage.enum_type(:event_id).symbols.dup.freeze
 
-    STORAGE = DomainCallbackStorage.new
+    DOMAIN_STORAGE = HostCallbackStorage.new
+    POOL_STORAGE = HostCallbackStorage.new
 
     DOMAIN_EVENT_CALLBACKS = DOMAIN_EVENT_IDS.map do |event_id_sym|
       func = FFI::Domain.event_callback_for(event_id_sym) do |conn_ptr, dom_ptr, *args, op_ptr|
+        Util.log(:debug, "DOMAIN_EVENT_CALLBACKS[#{event_id_sym}]") do
+          "inside callback conn_ptr=#{conn_ptr}, pool_ptr=#{dom_ptr}, args=#{args}, op_ptr=#{op_ptr}"
+        end
         connection = Connection.load_ref(conn_ptr)
         domain = Domain.load_ref(dom_ptr)
-        block, opaque = STORAGE.retrieve_from_pointer(op_ptr)
+        block, opaque = DOMAIN_STORAGE.retrieve_from_pointer(op_ptr)
         block.call(connection, domain, *args, opaque)
+      end
+      [event_id_sym, func]
+    end.to_h.freeze
+
+    POOL_EVENT_CALLBACKS = POOL_EVENT_IDS.map do |event_id_sym|
+      func = FFI::Storage.event_callback_for(event_id_sym) do |conn_ptr, pool_ptr, *args, op_ptr|
+        Util.log(:debug, "POOL_EVENT_CALLBACKS[#{event_id_sym}]") do
+          "inside callback conn_ptr=#{conn_ptr}, pool_ptr=#{pool_ptr}, args=#{args}, op_ptr=#{op_ptr}"
+        end
+        connection = Connection.load_ref(conn_ptr)
+        pool = StoragePool.load_ref(pool_ptr)
+        block, opaque = POOL_STORAGE.retrieve_from_pointer(op_ptr)
+        block.call(connection, pool, *args, opaque)
       end
       [event_id_sym, func]
     end.to_h.freeze
@@ -163,7 +181,7 @@ module Libvirt
       event_id, event_id_sym = Util.parse_enum(enum, event_id)
       cb = DOMAIN_EVENT_CALLBACKS.fetch(event_id_sym)
 
-      cb_data, cb_data_free_func = STORAGE.allocate_struct
+      cb_data, cb_data_free_func = DOMAIN_STORAGE.allocate_struct
 
       result = FFI::Domain.virConnectDomainEventRegisterAny(
           @conn_ptr,
@@ -178,7 +196,7 @@ module Libvirt
         raise Errors::LibError, "Couldn't register domain event callback"
       end
 
-      STORAGE.store_struct(
+      DOMAIN_STORAGE.store_struct(
           cb_data,
           connection_pointer: @conn_ptr,
           callback_id: result,
@@ -195,8 +213,40 @@ module Libvirt
       raise Errors::LibError, "Couldn't deregister domain event callback" if result.negative?
 
       # virConnectDomainEventDeregisterAny will call free func
-      # So we don't need to remove object from STORAGE here.
+      # So we don't need to remove object from DOMAIN_STORAGE here.
       true
+    end
+
+    def register_storage_pool_event_callback(event_id, storage_pool = nil, opaque = nil, &block)
+      dbg { "#register_storage_pool_event_callback event_id=#{event_id}" }
+
+      enum = FFI::Storage.enum_type(:event_id)
+      event_id, event_id_sym = Util.parse_enum(enum, event_id)
+      cb = POOL_EVENT_CALLBACKS.fetch(event_id_sym)
+
+      cb_data, cb_data_free_func = POOL_STORAGE.allocate_struct
+
+      result = FFI::Storage.virConnectStoragePoolEventRegisterAny(
+          @conn_ptr,
+          storage_pool&.to_ptr,
+          event_id,
+          cb,
+          cb_data.pointer,
+          cb_data_free_func
+      )
+      if result.negative?
+        cb_data.pointer.free
+        raise Errors::LibError, "Couldn't register storage pool event callback"
+      end
+
+      POOL_STORAGE.store_struct(
+          cb_data,
+          connection_pointer: @conn_ptr,
+          callback_id: result,
+          cb: block,
+          opaque: opaque
+      )
+      result
     end
 
     def lib_version

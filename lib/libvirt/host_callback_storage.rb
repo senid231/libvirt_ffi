@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Libvirt
-  class DomainCallbackStorage
+  class HostCallbackStorage
     class CallbackDataStruct < ::FFI::Struct
       layout :connection_pointer, :pointer,
              :callback_id, :int
@@ -12,7 +12,7 @@ module Libvirt
     end
 
     # @return [Array<2>]
-    #   cb_data [Libvirt::DomainCallbackStorage::CallbackDataStruct],
+    #   cb_data [Libvirt::HostCallbackStorage::CallbackDataStruct],
     #   cb_data_free_func [FFI::Function]
     def allocate_struct
       dbg { '#allocate_struct' }
@@ -20,7 +20,7 @@ module Libvirt
       cb_data_ptr = ::FFI::MemoryPointer.new(:char, CallbackDataStruct.size, false)
       cb_data = CallbackDataStruct.new(cb_data_ptr)
       cb_data_free_func = FFI::Common.free_function do |pointer|
-        dbg { 'Libvirt::DomainCallbackStorage cb_data_free_func triggered' }
+        dbg { 'Libvirt::HostCallbackStorage cb_data_free_func triggered' }
         remove_struct(pointer)
       end
       [cb_data, cb_data_free_func]
@@ -63,7 +63,7 @@ module Libvirt
     private
 
     def dbg(&block)
-      Util.log(:debug, 'Libvirt::DomainCallbackStorage', &block)
+      Util.log(:debug, 'Libvirt::HostCallbackStorage', &block)
     end
   end
 end

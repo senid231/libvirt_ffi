@@ -2,7 +2,7 @@
 
 require 'ffi'
 require 'objspace'
-require 'libvirt/domain_callback_storage'
+require 'libvirt/host_callback_storage'
 require 'libvirt/util'
 require 'libvirt/errors'
 require 'libvirt/ffi'

@@ -61,6 +61,21 @@ module Libvirt
       ptr.get_array_of_pointer(0, size).map { |stv_ptr| StorageVolume.new(stv_ptr) }
     end
 
+    def uuid
+      buff = ::FFI::MemoryPointer.new(:char, Util::UUID_STRING_BUFLEN)
+      result = FFI::Storage.virStoragePoolGetUUIDString(@ptr, buff)
+      raise Errors::LibError, "Couldn't get storage pool uuid" if result.negative?
+
+      buff.read_string
+    end
+
+    def name
+      result = FFI::Storage.virStoragePoolGetName(@ptr)
+      raise Errors::LibError, "Couldn't retrieve storage pool name" if result.nil?
+
+      result
+    end
+
     private
 
     def dbg(&block)
