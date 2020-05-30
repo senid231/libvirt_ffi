@@ -31,6 +31,14 @@ module Libvirt
                :threads, :uint
       end
 
+      # enum virConnectCloseReason
+      enum :close_reason, [
+        :ERROR, 0x0, # Misc I/O error
+        :EOF, 0x1, # End-of-file from server
+        :KEEPALIVE, 0x2, # Keepalive timer triggered
+        :CLIENT, 0x3 # Client requested it
+      ]
+
       # int  virGetVersion  (
       #   unsigned long *libVer,
       #   const char *type,
@@ -49,7 +57,7 @@ module Libvirt
       #   int reason,
       #   void * opaque
       # )
-      callback :virConnectCloseFunc, [:pointer, :int, :pointer], :void
+      callback :virConnectCloseFunc, [:pointer, :close_reason, :pointer], :void
 
       # virConnectPtr  virConnectOpen (const char * name)
       attach_function :virConnectOpen, [:string], :pointer
