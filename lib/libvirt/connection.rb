@@ -180,7 +180,8 @@ module Libvirt
           connection_pointer: @conn_ptr,
           callback_id: result,
           cb: block,
-          opaque: opaque
+          opaque: opaque,
+          free_func: cb_data_free_func
       )
       result
     end
@@ -213,7 +214,8 @@ module Libvirt
           connection_pointer: @conn_ptr,
           callback_id: result,
           cb: block,
-          opaque: opaque
+          opaque: opaque,
+          free_func: cb_data_free_func
       )
       result
     end
@@ -256,7 +258,8 @@ module Libvirt
           connection_pointer: @conn_ptr,
           callback_id: result,
           cb: block,
-          opaque: opaque
+          opaque: opaque,
+          free_func: cb_data_free_func
       )
       result
     end

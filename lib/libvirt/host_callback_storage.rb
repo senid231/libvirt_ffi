@@ -29,12 +29,20 @@ module Libvirt
       [cb_data, cb_data_free_func]
     end
 
-    def store_struct(cb_data, connection_pointer:, callback_id:, cb:, opaque:)
+    def store_struct(cb_data, options)
       dbg { '#store_struct' }
 
+      options.assert_valid_keys(:connection_pointer, :callback_id, :cb, :opaque, :free_func)
+      connection_pointer = options.fetch(:connection_pointer)
+      callback_id = options.fetch(:callback_id)
+      cb = options.fetch(:cb)
+      opaque = options.fetch(:opaque)
+      free_func = options.fetch(:free_func)
       cb_data[:connection_pointer] = connection_pointer
       cb_data[:callback_id] = callback_id
-      @inner_storage[connection_pointer.address][callback_id] = { cb: cb, opaque: opaque, pointer: cb_data.pointer }
+      @inner_storage[connection_pointer.address][callback_id] = {
+          cb: cb, opaque: opaque, pointer: cb_data.pointer, free_func: free_func
+      }
     end
 
     def remove_struct(pointer)
