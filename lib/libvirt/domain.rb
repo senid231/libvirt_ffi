@@ -56,6 +56,24 @@ module Libvirt
       FFI::Domain.virDomainGetMaxVcpus(@dom_ptr)
     end
 
+    # @return [Boolean]
+    # @raise [Libvirt::Errors::LibError]
+    def auto_start
+      value = ::FFI::MemoryPointer.new(:int)
+      result = FFI::Domain.virDomainGetAutostart(@dom_ptr, value)
+      raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
+
+      value.read_int == 1
+    end
+
+    # @param value [Boolean]
+    # @raise [Libvirt::Errors::LibError]
+    def set_auto_start(value)
+      value = value ? 1 : 0
+      result = FFI::Domain.virDomainSetAutostart(@dom_ptr, value)
+      raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
+    end
+
     # def vcpus
     #   # https://github.com/libvirt/ruby-libvirt/blob/9f71ff5add1f57ffef7cf513b72638d92d9fd84f/ext/libvirt/domain.c#L787
     #   # dominfo = virDomainGetInfo

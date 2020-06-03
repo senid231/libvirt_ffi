@@ -290,17 +290,17 @@ module Libvirt
           :MIGRATABLE, 0x8 # dump XML suitable for migration
       ]
 
-      # int  virDomainFree  (
+      # int virDomainFree (
       #   virDomainPtr domain
       # )
       attach_function :virDomainFree, [:pointer], :int
 
-      # int  virDomainRef (
+      # int virDomainRef (
       #   virDomainPtr domain
       # )
       attach_function :virDomainRef, [:pointer], :int
 
-      # int  virConnectDomainEventRegisterAny(
+      # int virConnectDomainEventRegisterAny(
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int eventID,
@@ -317,20 +317,20 @@ module Libvirt
           :pointer
       ], :int
 
-      # int  virConnectDomainEventDeregisterAny (
+      # int virConnectDomainEventDeregisterAny (
       #   virConnectPtr conn,
       #   int callbackID
       # )
       attach_function :virConnectDomainEventDeregisterAny, [:pointer, :int], :int
 
-      # int  virConnectListAllDomains (
+      # int virConnectListAllDomains (
       #   virConnectPtr conn,
       #   virDomainPtr **domains,
       #   unsigned int flags
       # )
       attach_function :virConnectListAllDomains, [:pointer, :pointer, :uint], :int
 
-      # int  virDomainGetState  (
+      # int virDomainGetState (
       #   virDomainPtr domain,
       #   int *state,
       #   int *reason,
@@ -343,12 +343,12 @@ module Libvirt
       # )
       attach_function :virDomainGetName, [:pointer], :string
 
-      # int  virDomainGetMaxVcpus (
+      # int virDomainGetMaxVcpus (
       #   virDomainPtr domain
       # )
       attach_function :virDomainGetMaxVcpus, [:pointer], :int
 
-      # int  virDomainGetVcpus  (
+      # int virDomainGetVcpus (
       #   virDomainPtr domain,
       #   virVcpuInfoPtr info,
       #   int maxinfo,
@@ -357,18 +357,18 @@ module Libvirt
       # )
       attach_function :virDomainGetVcpus, [:pointer, :pointer, :int, :pointer, :int], :int
 
-      # int  virDomainGetUUIDString (
+      # int virDomainGetUUIDString (
       #   virDomainPtr domain,
       #   char * buf
       # )
       attach_function :virDomainGetUUIDString, [:pointer, :pointer], :int
 
-      # unsigned long  virDomainGetMaxMemory  (
+      # unsigned long  virDomainGetMaxMemory (
       #   virDomainPtr domain
       # )
       attach_function :virDomainGetMaxMemory, [:pointer], :ulong
 
-      # char *virDomainGetXMLDesc  (
+      # char *virDomainGetXMLDesc (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
@@ -382,7 +382,7 @@ module Libvirt
       # )
       attach_function :virDomainScreenshot, [:pointer, :pointer, :uint, :uint], :strptr
 
-      # typedef int  (*virConnectDomainEventCallback) (
+      # typedef int (*virConnectDomainEventCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int event,
@@ -411,7 +411,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void (*virConnectDomainEventWatchdogCallback)  (
+      # typedef void (*virConnectDomainEventWatchdogCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int action,
@@ -441,7 +441,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void (*virConnectDomainEventGraphicsCallback)  (
+      # typedef void (*virConnectDomainEventGraphicsCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int phase,
@@ -462,7 +462,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventIOErrorReasonCallback)  (
+      # typedef void (*virConnectDomainEventIOErrorReasonCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * srcPath,
@@ -481,7 +481,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventBlockJobCallback)  (
+      # typedef void (*virConnectDomainEventBlockJobCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * disk,
@@ -498,7 +498,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventDiskChangeCallback)  (
+      # typedef void (*virConnectDomainEventDiskChangeCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * oldSrcPath,
@@ -517,7 +517,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventTrayChangeCallback)  (
+      # typedef void (*virConnectDomainEventTrayChangeCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * devAlias,
@@ -532,7 +532,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventPMWakeupCallback)  (
+      # typedef void (*virConnectDomainEventPMWakeupCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int reason,
@@ -545,7 +545,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventPMSuspendCallback)  (
+      # typedef void (*virConnectDomainEventPMSuspendCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int reason,
@@ -558,7 +558,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventBalloonChangeCallback)  (
+      # typedef void (*virConnectDomainEventBalloonChangeCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   unsigned long long actual,
@@ -571,7 +571,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventPMSuspendDiskCallback)  (
+      # typedef void (*virConnectDomainEventPMSuspendDiskCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int reason,
@@ -584,7 +584,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventDeviceRemovedCallback)  (
+      # typedef void (*virConnectDomainEventDeviceRemovedCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * devAlias,
@@ -597,7 +597,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventTunableCallback)  (
+      # typedef void (*virConnectDomainEventTunableCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   virTypedParameterPtr params,
@@ -612,7 +612,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventAgentLifecycleCallback)  (
+      # typedef void (*virConnectDomainEventAgentLifecycleCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int state,
@@ -627,7 +627,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventDeviceAddedCallback)  (
+      # typedef void (*virConnectDomainEventDeviceAddedCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * devAlias,
@@ -640,7 +640,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventMigrationIterationCallback)  (
+      # typedef void (*virConnectDomainEventMigrationIterationCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int iteration,
@@ -653,7 +653,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventJobCompletedCallback)  (
+      # typedef void (*virConnectDomainEventJobCompletedCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   virTypedParameterPtr params,
@@ -668,7 +668,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventDeviceRemovalFailedCallback)  (
+      # typedef void (*virConnectDomainEventDeviceRemovalFailedCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * devAlias,
@@ -681,7 +681,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventMetadataChangeCallback)  (
+      # typedef void (*virConnectDomainEventMetadataChangeCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   int type,
@@ -696,7 +696,7 @@ module Libvirt
           :pointer
       ], :void
 
-      # typedef void  (*virConnectDomainEventBlockThresholdCallback)  (
+      # typedef void (*virConnectDomainEventBlockThresholdCallback) (
       #   virConnectPtr conn,
       #   virDomainPtr dom,
       #   const char * dev,
@@ -715,53 +715,53 @@ module Libvirt
           :pointer
       ], :void
 
-      # int  virDomainReboot (
+      # int virDomainReboot (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
       attach_function :virDomainReboot, [:pointer, :uint], :int
 
-      # int  virDomainShutdownFlags (
+      # int virDomainShutdownFlags (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
       attach_function :virDomainShutdownFlags, [:pointer, :shutdown_flags], :int
 
-      # int  virDomainDestroyFlags  (
+      # int virDomainDestroyFlags (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
       attach_function :virDomainDestroyFlags, [:pointer, :uint], :int
 
-      # int  virDomainReset (
+      # int virDomainReset (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
       attach_function :virDomainReset, [:pointer, :uint], :int
 
-      # int  virDomainSuspend (
+      # int virDomainSuspend (
       #   virDomainPtr domain
       # )
       attach_function :virDomainSuspend, [:pointer], :int
 
-      # int  virDomainResume  (
+      # int virDomainResume (
       #   virDomainPtr domain
       # )
       attach_function :virDomainResume, [:pointer], :int
 
-      # int  virDomainCreateWithFlags (
+      # int virDomainCreateWithFlags (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
       attach_function :virDomainCreateWithFlags, [:pointer, :uint], :int
 
-      # int  virDomainManagedSave (
+      # int virDomainManagedSave (
       #   virDomainPtr dom,
       #   unsigned int flags
       # )
       attach_function :virDomainManagedSave, [:pointer, :save_restore_flags], :int
 
-      # int  virDomainUndefineFlags (
+      # int virDomainUndefineFlags (
       #   virDomainPtr domain,
       #   unsigned int flags
       # )
@@ -774,7 +774,7 @@ module Libvirt
       # )
       attach_function :virDomainDefineXMLFlags, [:pointer, :string, :uint], :pointer
 
-      # int  virDomainSetMetadata (
+      # int virDomainSetMetadata (
       #   virDomainPtr domain,
       #   int type,
       #   const char * metadata,
@@ -800,6 +800,18 @@ module Libvirt
       #   virDomainPtr dom
       # )
       attach_function :virDomainIsPersistent, [:pointer], :int
+
+      # int virDomainGetAutostart (
+      #   virDomainPtr domain,
+      #   int * autostart
+      # )
+      attach_function :virDomainGetAutostart, [:pointer, :pointer], :int
+
+      # int virDomainSetAutostart (
+      #   virDomainPtr domain,
+      #   int autostart
+      # )
+      attach_function :virDomainSetAutostart, [:pointer, :int], :int
 
       # Converts detail from lifecycle callback from integer to symbol name.
       # @param event [Symbol] enum :event_type (virDomainEventType)
