@@ -16,6 +16,7 @@ require 'libvirt/domain'
 require 'libvirt/stream'
 require 'libvirt/storage_pool'
 require 'libvirt/storage_volume'
+require 'libvirt/network'
 require 'libvirt/version'
 
 module Libvirt

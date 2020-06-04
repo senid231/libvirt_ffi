@@ -3,6 +3,9 @@
 module Libvirt
   module Xml
     class Generic
+      TRUE_VALUES = %w[yes on].freeze
+      FALSE_VALUES = %w[no off].freeze
+
       class_attribute :_root_path, instance_writer: false, default: '.'
       class_attribute :_attributes_opts, instance_writer: false, default: {}
 
@@ -111,7 +114,7 @@ module Libvirt
       # @param opts [Hash{Symbol=>Object}]
       # @return [Object, nil]
       def decode(value, opts)
-        return if value.nil?
+        return opts[:default] if value.nil?
 
         cast = opts[:cast]
         return value if cast.nil?
@@ -144,9 +147,9 @@ module Libvirt
       def decode_bool(value, _opts)
         return value if value.is_a?(TrueClass) || value.is_a?(FalseClass)
 
-        return true if value == 'yes'
+        return true if TRUE_VALUES.include?(value)
 
-        return false if value == 'no'
+        return false if FALSE_VALUES.include?(value)
 
         nil
       end
