@@ -61,7 +61,7 @@ module Libvirt
     def auto_start
       value = ::FFI::MemoryPointer.new(:int)
       result = FFI::Domain.virDomainGetAutostart(@dom_ptr, value)
-      raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
+      raise Errors::LibError, "Couldn't get domain auto_start" if result.negative?
 
       value.read_int == 1
     end
@@ -71,7 +71,7 @@ module Libvirt
     def set_auto_start(value)
       value = value ? 1 : 0
       result = FFI::Domain.virDomainSetAutostart(@dom_ptr, value)
-      raise Errors::LibError, "Couldn't get domain uuid" if result.negative?
+      raise Errors::LibError, "Couldn't set domain auto_start" if result.negative?
     end
 
     # def vcpus

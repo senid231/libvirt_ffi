@@ -13,7 +13,7 @@ module Libvirt
       @ptr = pointer
 
       free = ->(obj_id) do
-        Util.log(:debug) { "Finalize Libvirt::StoragePool 0x#{obj_id.to_s(16)} @ptr=#{@ptr}," }
+        dbg { "Finalize Libvirt::StoragePool 0x#{obj_id.to_s(16)} @ptr=#{@ptr}," }
         return unless @ptr
 
         fr_result = FFI::Storage.virStoragePoolFree(@ptr)
@@ -79,7 +79,7 @@ module Libvirt
     private
 
     def dbg(&block)
-      Util.log(:debug, 'Libvirt::Domain', &block)
+      Util.log(:debug, 'Libvirt::StoragePool', &block)
     end
   end
 end

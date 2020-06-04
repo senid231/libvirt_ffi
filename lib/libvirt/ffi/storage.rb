@@ -218,7 +218,7 @@ module Libvirt
 
       # Creates event callback function for provided event_id
       # @param event_id [Integer,Symbol]
-      # @yield connect_ptr, domain_ptr, *args, opaque_ptr
+      # @yield connect_ptr, pool_ptr, *args, opaque_ptr
       # @return [FFI::Function]
       def event_callback_for(event_id, &block)
         event_id_sym = event_id.is_a?(Symbol) ? event_id : enum_type(:event_id)[event_id]
