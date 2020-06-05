@@ -13,6 +13,7 @@ module Libvirt
     require 'libvirt/xml/generic'
     require 'libvirt/xml/storage_pool'
     require 'libvirt/xml/storage_volume'
+    require 'libvirt/xml/interface'
     require 'libvirt/xml/ip_address'
     require 'libvirt/xml/network'
     require 'libvirt/xml/memory'

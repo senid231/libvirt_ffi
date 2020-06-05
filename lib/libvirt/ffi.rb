@@ -14,5 +14,6 @@ module Libvirt
     require 'libvirt/ffi/stream'
     require 'libvirt/ffi/storage'
     require 'libvirt/ffi/network'
+    require 'libvirt/ffi/interface'
   end
 end

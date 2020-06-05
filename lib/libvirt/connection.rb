@@ -202,6 +202,33 @@ module Libvirt
       ptr.get_array_of_pointer(0, size).map { |n_ptr| Network.new(n_ptr) }
     end
 
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Integer]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_interfaces_qty(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Interface.enum_type(:list_all_flags)
+      result = FFI::Interface.virConnectListAllInterfaces(@conn_ptr, nil, flags)
+      raise Errors::LibError, "Couldn't retrieve interfaces qty with flags #{flags.to_s(16)}" if result.negative?
+
+      result
+    end
+
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Array<Libvirt::Interface>, Array]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_interfaces(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Interface.enum_type(:list_all_flags)
+      size = list_all_interfaces_qty(flags)
+      return [] if size.zero?
+
+      interfaces_ptr = ::FFI::MemoryPointer.new(:pointer, size)
+      result = FFI::Interface.virConnectListAllInterfaces(@conn_ptr, interfaces_ptr, 0)
+      raise Errors::LibError, "Couldn't retrieve interfaces list" if result.negative?
+
+      ptr = interfaces_ptr.read_pointer
+      ptr.get_array_of_pointer(0, size).map { |i_ptr| Interface.new(i_ptr) }
+    end
+
     def register_close_callback(opaque = nil, &block)
       dbg { "#register_close_callback opaque=#{opaque}" }
 
@@ -433,6 +460,33 @@ module Libvirt
       raise Errors::LibError, "Couldn't define network with xml" if pointer.null?
 
       Network.new(pointer)
+    end
+
+    # @param xml [String]
+    # @raise [Libvirt::Errors::LibError]
+    def define_interface(xml)
+      pointer = FFI::Interface.virInterfaceDefineXML(@conn_ptr, xml, 0)
+      raise Errors::LibError, "Couldn't define interface with xml" if pointer.null?
+
+      Interface.new(pointer)
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def begin_interface_change
+      result = FFI::Interface.virInterfaceChangeBegin(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't begin interface change" if result.negative?
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def commit_interface_change
+      result = FFI::Interface.virInterfaceChangeCommit(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't commit interface change" if result.negative?
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def rollback_interface_change
+      result = FFI::Interface.virInterfaceChangeRollback(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't rollback interface change" if result.negative?
     end
 
     private
