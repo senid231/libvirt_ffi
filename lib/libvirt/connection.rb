@@ -4,9 +4,11 @@ module Libvirt
   class Connection
     DOMAIN_EVENT_IDS = FFI::Domain.enum_type(:event_id).symbols.dup.freeze
     POOL_EVENT_IDS = FFI::Storage.enum_type(:event_id).symbols.dup.freeze
+    NETWORK_EVENT_IDS = FFI::Network.enum_type(:event_id).symbols.dup.freeze
 
     DOMAIN_STORAGE = HostCallbackStorage.new(:domain_event)
     POOL_STORAGE = HostCallbackStorage.new(:storage_pool_event)
+    NETWORK_STORAGE = HostCallbackStorage.new(:network_event)
     CLOSE_STORAGE = HostCallbackStorage.new(:close)
 
     DOMAIN_EVENT_CALLBACKS = DOMAIN_EVENT_IDS.map do |event_id_sym|
@@ -30,6 +32,19 @@ module Libvirt
         connection = Connection.load_ref(conn_ptr)
         pool = StoragePool.load_ref(pool_ptr)
         block, opaque = POOL_STORAGE.retrieve_from_pointer(op_ptr)
+        block.call(connection, pool, *args, opaque)
+      end
+      [event_id_sym, func]
+    end.to_h.freeze
+
+    NETWORK_EVENT_CALLBACKS = NETWORK_EVENT_IDS.map do |event_id_sym|
+      func = FFI::Network.event_callback_for(event_id_sym) do |conn_ptr, pool_ptr, *args, op_ptr|
+        Util.log(:debug, "NETWORK_EVENT_CALLBACKS[#{event_id_sym}]") do
+          "inside callback conn_ptr=#{conn_ptr}, pool_ptr=#{pool_ptr}, args=#{args}, op_ptr=#{op_ptr}"
+        end
+        connection = Connection.load_ref(conn_ptr)
+        pool = Network.load_ref(pool_ptr)
+        block, opaque = NETWORK_STORAGE.retrieve_from_pointer(op_ptr)
         block.call(connection, pool, *args, opaque)
       end
       [event_id_sym, func]
@@ -160,6 +175,60 @@ module Libvirt
       ptr.get_array_of_pointer(0, size).map { |stp_ptr| StoragePool.new(stp_ptr) }
     end
 
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Integer]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_networks_qty(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Network.enum_type(:list_all_flags)
+      result = FFI::Network.virConnectListAllNetworks(@conn_ptr, nil, flags)
+      raise Errors::LibError, "Couldn't retrieve networks qty with flags #{flags.to_s(16)}" if result.negative?
+
+      result
+    end
+
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Array<Libvirt::Network>, Array]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_networks(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Network.enum_type(:list_all_flags)
+      size = list_all_networks_qty(flags)
+      return [] if size.zero?
+
+      networks_ptr = ::FFI::MemoryPointer.new(:pointer, size)
+      result = FFI::Network.virConnectListAllNetworks(@conn_ptr, networks_ptr, 0)
+      raise Errors::LibError, "Couldn't retrieve networks list" if result.negative?
+
+      ptr = networks_ptr.read_pointer
+      ptr.get_array_of_pointer(0, size).map { |n_ptr| Network.new(n_ptr) }
+    end
+
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Integer]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_interfaces_qty(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Interface.enum_type(:list_all_flags)
+      result = FFI::Interface.virConnectListAllInterfaces(@conn_ptr, nil, flags)
+      raise Errors::LibError, "Couldn't retrieve interfaces qty with flags #{flags.to_s(16)}" if result.negative?
+
+      result
+    end
+
+    # @param options_or_flags [Array<Symbol>,Hash{Symbol=>Boolean},Integer,Symbol,nil]
+    # @return [Array<Libvirt::Interface>, Array]
+    # @raise [Libvirt::Errors::LibError]
+    def list_all_interfaces(options_or_flags = nil)
+      flags = Util.parse_flags options_or_flags, FFI::Interface.enum_type(:list_all_flags)
+      size = list_all_interfaces_qty(flags)
+      return [] if size.zero?
+
+      interfaces_ptr = ::FFI::MemoryPointer.new(:pointer, size)
+      result = FFI::Interface.virConnectListAllInterfaces(@conn_ptr, interfaces_ptr, 0)
+      raise Errors::LibError, "Couldn't retrieve interfaces list" if result.negative?
+
+      ptr = interfaces_ptr.read_pointer
+      ptr.get_array_of_pointer(0, size).map { |i_ptr| Interface.new(i_ptr) }
+    end
+
     def register_close_callback(opaque = nil, &block)
       dbg { "#register_close_callback opaque=#{opaque}" }
 
@@ -184,6 +253,17 @@ module Libvirt
           free_func: cb_data_free_func
       )
       result
+    end
+
+    def deregister_close_callback
+      dbg { '#deregister_close_callback' }
+
+      result = FFI::Host.virConnectUnregisterCloseCallback(@conn_ptr, CLOSE_CALLBACK)
+      raise Errors::LibError, "Couldn't deregister close callback" if result.negative?
+
+      # virConnectUnregisterCloseCallback will call free func
+      # So we don't need to remove object from CLOSE_STORAGE here.
+      true
     end
 
     # @yield conn, dom, *args
@@ -275,14 +355,47 @@ module Libvirt
       true
     end
 
-    def deregister_close_callback
-      dbg { '#deregister_close_callback' }
+    def register_network_event_callback(event_id, network = nil, opaque = nil, &block)
+      dbg { "#register_network_event_callback event_id=#{event_id}" }
 
-      result = FFI::Host.virConnectUnregisterCloseCallback(@conn_ptr, CLOSE_CALLBACK)
-      raise Errors::LibError, "Couldn't deregister close callback" if result.negative?
+      enum = FFI::Network.enum_type(:event_id)
+      event_id, event_id_sym = Util.parse_enum(enum, event_id)
+      cb = NETWORK_EVENT_CALLBACKS.fetch(event_id_sym)
 
-      # virConnectUnregisterCloseCallback will call free func
-      # So we don't need to remove object from CLOSE_STORAGE here.
+      cb_data, cb_data_free_func = NETWORK_STORAGE.allocate_struct
+
+      result = FFI::Network.virConnectNetworkEventRegisterAny(
+          @conn_ptr,
+          network&.to_ptr,
+          event_id,
+          cb,
+          cb_data.pointer,
+          cb_data_free_func
+      )
+      if result.negative?
+        cb_data.pointer.free
+        raise Errors::LibError, "Couldn't register network event callback"
+      end
+
+      NETWORK_STORAGE.store_struct(
+          cb_data,
+          connection_pointer: @conn_ptr,
+          callback_id: result,
+          cb: block,
+          opaque: opaque,
+          free_func: cb_data_free_func
+      )
+      result
+    end
+
+    def deregister_network_event_callback(callback_id)
+      dbg { "#deregister_network_event_callback callback_id=#{callback_id}" }
+
+      result = FFI::Network.virConnectNetworkEventDeregisterAny(@conn_ptr, callback_id)
+      raise Errors::LibError, "Couldn't deregister network event callback" if result.negative?
+
+      # virConnectNetworkEventDeregisterAny will call free func
+      # So we don't need to remove object from NETWORK_STORAGE here.
       true
     end
 
@@ -329,6 +442,51 @@ module Libvirt
       raise Errors::LibError, "Couldn't define domain" if pointer.null?
 
       Domain.new(pointer)
+    end
+
+    # @param xml [String]
+    # @raise [Libvirt::Errors::LibError]
+    def create_network(xml)
+      pointer = FFI::Network.virNetworkCreateXML(@ptr, xml)
+      raise Errors::LibError, "Couldn't create network with xml" if pointer.null?
+
+      Network.new(pointer)
+    end
+
+    # @param xml [String]
+    # @raise [Libvirt::Errors::LibError]
+    def define_network(xml)
+      pointer = FFI::Network.virNetworkDefineXML(@ptr, xml)
+      raise Errors::LibError, "Couldn't define network with xml" if pointer.null?
+
+      Network.new(pointer)
+    end
+
+    # @param xml [String]
+    # @raise [Libvirt::Errors::LibError]
+    def define_interface(xml)
+      pointer = FFI::Interface.virInterfaceDefineXML(@conn_ptr, xml, 0)
+      raise Errors::LibError, "Couldn't define interface with xml" if pointer.null?
+
+      Interface.new(pointer)
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def begin_interface_change
+      result = FFI::Interface.virInterfaceChangeBegin(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't begin interface change" if result.negative?
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def commit_interface_change
+      result = FFI::Interface.virInterfaceChangeCommit(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't commit interface change" if result.negative?
+    end
+
+    # @raise [Libvirt::Errors::LibError]
+    def rollback_interface_change
+      result = FFI::Interface.virInterfaceChangeRollback(@conn_ptr, 0)
+      raise Errors::LibError, "Couldn't rollback interface change" if result.negative?
     end
 
     private

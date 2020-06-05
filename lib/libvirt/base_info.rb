@@ -16,6 +16,7 @@ module Libvirt
       end
     end
 
+    # @param pointer [FFI::Pointer]
     def initialize(pointer)
       raise ArgumentError, "Can't initialize base class #{self.class}" if self.class == BaseInfo
 
@@ -23,12 +24,19 @@ module Libvirt
       @struct = self.class._struct_class.new(pointer)
     end
 
+    # @param attr [Symbol]
+    # @return [Object, nil]
     def [](attr)
       @struct[attr]
     end
 
+    # @return [Hash]
     def to_h
       @struct.members.map { |attr| [attr, @struct[attr]] }.to_h
+    end
+
+    def to_ptr
+      @struct.to_ptr
     end
   end
 end
