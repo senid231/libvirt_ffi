@@ -69,5 +69,4 @@ Async do
   conn.register_network_event_callback(:LIFECYCLE) do |_c, net, event, detail, opaque|
     puts "NETWORK LIFECYCLE EVENT name=#{net.name}, event=#{event}, detail=#{detail}, opaque=#{opaque}"
   end
-
 end

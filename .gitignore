@@ -6,5 +6,6 @@
 /pkg/
 /spec/reports/
 /tmp/
-
 /Gemfile.lock
+.rspec_local
+/spec/last_run.txt

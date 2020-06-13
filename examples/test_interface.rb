@@ -43,5 +43,4 @@ Async do
     puts "Interface #{i} xml_desc", interface.xml_desc
     puts "Interface #{i} xml", JSON.pretty_generate(Libvirt::Xml::Interface.load(interface.xml_desc).to_h)
   end
-
 end

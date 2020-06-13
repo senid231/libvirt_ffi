@@ -5,7 +5,7 @@ AllCops:
     - vendor/**/*
     - tmp/**/*
     - pkg/*
-    - test_usage/**/*.rb
+    - examples/**/*.rb
 
 Layout/LineLength:
   Max: 180

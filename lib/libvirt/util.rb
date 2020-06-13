@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
+require 'objspace'
+
 module Libvirt
   module Util
+    extend Loggable::ClassMethods
+
     UNIT_TO_BYTES = {
         b: 1,
         bytes: 1,
@@ -21,83 +25,102 @@ module Libvirt
 
     UUID_STRING_BUFLEN = 0x80 # RFC4122
 
-    class << self
-      attr_writer :logger
+    module_function
 
-      attr_reader :logger
+    def logger
+      @logger if defined?(@logger)
+    end
 
-      def log(severity, prog = nil, &block)
-        return if @logger.nil?
+    def logger=(value)
+      @logger = value
+    end
 
-        @logger.public_send(severity, prog, &block)
+    def log(severity, prog = nil, &block)
+      return if logger.nil?
+
+      logger.public_send(severity, prog, &block)
+    end
+
+    def library_path
+      %w[libvirt libvirt.so.0]
+    end
+
+    # @param [Integer] version_number ulong
+    def parse_version(version_number)
+      major = version_number / 1_000_000
+      minor = (version_number - major * 1_000_000) / 1_000
+      release = version_number - major * 1_000_000 - minor * 1_000
+      "#{major}.#{minor}.#{release}"
+    end
+
+    # @param enum [FFI::Enum]
+    # @param value [Symbol, Integer]
+    # @return [Array] event_id, event_id_sym
+    # @raise ArgumentError
+    def parse_enum(enum, value)
+      if value.is_a?(Symbol)
+        raise ArgumentError, 'invalid enum value' unless enum.symbols.include?(value)
+
+        return [enum.find(value), value]
       end
 
-      def library_path
-        %w[libvirt libvirt.so.0]
+      raise ArgumentError, 'invalid enum value' unless enum.symbol_map.values.include?(value)
+
+      [value, enum.symbol_map[value]]
+    end
+
+    # Bitwise OR integer flags calculation for C language.
+    # @param flags [Integer,Symbol,Array<Symbol>,Hash{Symbol=>Boolean},nil]
+    # @param enum [FFI::Enum]
+    # @param default [Integer] optional (default 0x0)
+    # @return [Integer] bitwise OR of keys
+    #  @example Usage:
+    #    parse_flags(nil, enum)
+    #    parse_flags({MANAGED_SAVE: true, SNAPSHOTS_METADATA: true, NVRAM: false}, enum)
+    #    parse_flags({managed_save: true, snapshots_metadata: true, keep_nvram: nil}, enum)
+    #    parse_flags(3, enum)
+    #    parse_flags([:MANAGED_SAVE, :SNAPSHOTS_METADATA], enum)
+    #    parse_flags([:managed_save, :snapshots_metadata], enum)
+    #
+    def parse_flags(flags, enum, default: 0x0)
+      flags = default if flags.nil?
+      flags = enum[flags] if flags.is_a?(Symbol)
+      return flags if flags.is_a?(Integer)
+
+      result = 0x0
+      flags = flags.select { |_, v| v }.keys if flags.is_a?(Hash)
+
+      raise ArgumentError, 'flags must be an Integer or a Hash or an Array' unless flags.is_a?(Array)
+
+      flags.each do |key|
+        result |= enum[key.to_s.upcase.to_sym]
       end
 
-      # @param [Integer] version_number ulong
-      def parse_version(version_number)
-        major = version_number / 1_000_000
-        minor = (version_number - major * 1_000_000) / 1_000
-        release = version_number - major * 1_000_000 - minor * 1_000
-        "#{major}.#{minor}.#{release}"
+      result
+    end
+
+    # @param value [Integer,String]
+    # @param unit [String,Symbol] default 'bytes'
+    # @return [Integer] memory in bytes
+    def parse_memory(value, unit)
+      unit ||= 'bytes'
+      multiplier = UNIT_TO_BYTES.fetch(unit.to_sym)
+      Integer(value) * multiplier
+    end
+
+    def define_finalizer(object, &block)
+      free = ->(obj_id) do
+        obj_id_hex = "0x#{obj_id.to_s(16)}"
+        ptr = object.to_ptr
+        ptr_hex = "0x#{ptr.address.to_s(16)}"
+        klass = object.class
+        dbg { "Finalize #{klass} object_id=#{obj_id_hex}, pointer=#{ptr_hex}" }
+        return if ptr.null?
+
+        cl_result = block.call(ptr)
+        err { "Couldn't close #{klass} object_id=#{obj_id_hex}, pointer=#{ptr_hex}" } if cl_result.negative?
       end
-
-      # @param enum [FFI::Enum]
-      # @param value [Symbol, Integer]
-      # @return [Array] event_id, event_id_sym
-      # @raise ArgumentError
-      def parse_enum(enum, value)
-        if value.is_a?(Symbol)
-          raise ArgumentError, 'invalid enum value' unless enum.symbols.include?(value)
-
-          return [enum.find(value), value]
-        end
-
-        raise ArgumentError, 'invalid enum value' unless enum.symbol_map.values.include?(value)
-
-        [value, enum.symbol_map[value]]
-      end
-
-      # Bitwise OR integer flags calculation for C language.
-      # @param flags [Integer,Symbol,Array<Symbol>,Hash{Symbol=>Boolean},nil]
-      # @param enum [FFI::Enum]
-      # @param default [Integer] optional (default 0x0)
-      # @return [Integer] bitwise OR of keys
-      #  @example Usage:
-      #    parse_flags(nil, enum)
-      #    parse_flags({MANAGED_SAVE: true, SNAPSHOTS_METADATA: true, NVRAM: false}, enum)
-      #    parse_flags({managed_save: true, snapshots_metadata: true, keep_nvram: nil}, enum)
-      #    parse_flags(3, enum)
-      #    parse_flags([:MANAGED_SAVE, :SNAPSHOTS_METADATA], enum)
-      #    parse_flags([:managed_save, :snapshots_metadata], enum)
-      #
-      def parse_flags(flags, enum, default: 0x0)
-        flags = default if flags.nil?
-        flags = enum[flags] if flags.is_a?(Symbol)
-        return flags if flags.is_a?(Integer)
-
-        result = 0x0
-        flags = flags.select { |_, v| v }.keys if flags.is_a?(Hash)
-
-        raise ArgumentError, 'flags must be an Integer or a Hash or an Array' unless flags.is_a?(Array)
-
-        flags.each do |key|
-          result |= enum[key.to_s.upcase.to_sym]
-        end
-
-        result
-      end
-
-      # @param value [Integer,String]
-      # @param unit [String,Symbol] default 'bytes'
-      # @return [Integer] memory in bytes
-      def parse_memory(value, unit)
-        unit ||= 'bytes'
-        multiplier = UNIT_TO_BYTES.fetch(unit.to_sym)
-        Integer(value) * multiplier
-      end
+      ObjectSpace.define_finalizer(object, free)
     end
   end
 end

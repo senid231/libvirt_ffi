@@ -20,24 +20,26 @@ IMPL = LibvirtAsync::Implementations.new
 Async do
   ASYNC_REACTOR = Async::Task.current.reactor
 
-  puts "Lib version #{Libvirt.lib_version}"
-  puts "Gem version #{Libvirt::VERSION}"
+  puts "Lib version #{Libvirt.lib_version}",
+       "Gem version #{Libvirt::VERSION}"
 
   IMPL.start
 
-  conn = Libvirt::Connection.new('qemu+tcp://localhost:16510/system')
+  uri = 'test:///default?qwe'
+  # uri = 'qemu+tcp://localhost:16510/system'
+  conn = Libvirt::Connection.new(uri)
   conn.open
 
-  puts "Connection version #{conn.version.inspect}"
-  puts "Connection lib_version #{conn.lib_version.inspect}"
-  puts "Connection hostname #{conn.hostname.inspect}"
+  puts "Connection version #{conn.version.inspect}",
+       "Connection lib_version #{conn.lib_version.inspect}",
+       "Connection hostname #{conn.hostname.inspect}",
+       "Connection URI #{conn.uri.inspect}"
 
   doms = conn.list_all_domains
   puts "Connection domains qty #{doms.size}"
 
   doms.each.with_index do |dom, i|
-    puts "Domain #{i} xml", dom.xml_desc
-    puts "Domain #{i} xml object", Libvirt::Xml::Domain.load(dom.xml_desc).to_h
+    puts "Domain #{i} xml", dom.xml_desc,
+         "Domain #{i} xml object", Libvirt::Xml::Domain.load(dom.xml_desc).to_h
   end
-
 end
