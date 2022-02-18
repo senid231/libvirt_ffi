@@ -13,6 +13,8 @@ jobs:
         ruby: [ '2.6', '2.7', '3.0' ]
     name: Tests with Ruby ${{ matrix.ruby }}
     steps:
+      - name: Install libvirt
+        run: sudo apt-get install -y libvirt-dev libvirt0
       - uses: actions/checkout@v2
       - uses: actions/setup-ruby@v1
         with:
