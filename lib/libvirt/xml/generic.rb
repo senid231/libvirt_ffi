@@ -26,7 +26,7 @@ module Libvirt
         attr_accessor(*names)
       end
 
-      def self.attribute(name, options = {})
+      def self.attribute(name, **options)
         _attributes_opts.merge!(name.to_sym => options.dup)
         attr_accessor name
       end
@@ -41,7 +41,7 @@ module Libvirt
       # Build xml object with attributes.
       # @param attrs [Hash]
       # @return [Xml::Base]
-      def self.build(attrs = {})
+      def self.build(**attrs)
         xml_node = Nokogiri::XML(nil)
         obj = new(xml_node)
         attrs.each { |key, val| obj.public_send("#{key}=", val) }
